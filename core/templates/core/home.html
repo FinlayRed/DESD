@@ -1,0 +1,18 @@
+{% extends "core/base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">Project Links</h1>
+    <p>Quick links to the main pages built so far.</p>
+    <ul>
+        <li><a href="{% url 'core:producer-login' %}">Producer Login (Placeholder)</a></li>
+        <li><a href="{% url 'core:producer-register' %}">Producer Register (Placeholder)</a></li>
+        <li><a href="{% url 'core:product-list' %}">Producer Product List</a></li>
+        <li><a href="{% url 'core:product-create' %}">Create Product</a></li>
+        <li><a href="/admin/">Admin</a></li>
+        <li><a href="/admin/login/">Admin Login</a></li>
+    </ul>
+</div>
+{% endblock %}

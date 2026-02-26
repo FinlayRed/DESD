@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+
+{% block title %}My Products{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="actions" style="justify-content: space-between; margin-bottom: 1rem;">
+        <h1 style="margin: 0; font-size: 1.4rem;">My Products</h1>
+        <a href="{% url 'core:product-create' %}" class="btn primary">Add Product</a>
+    </div>
+
+    {% if products %}
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.get_category_display }}</td>
+                    <td>{{ product.price }}</td>
+                    <td>{% if product.is_active %}Active{% else %}Inactive{% endif %}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'core:product-update' product.pk %}" class="btn">Edit</a>
+                            <a href="{% url 'core:product-delete' product.pk %}" class="btn">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No products yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

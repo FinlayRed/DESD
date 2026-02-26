@@ -27,3 +27,11 @@ db.sqlite3
 build/
 dist/
 *.egg-info/
+
+#PDFs
+/PDFs/
+
+#experiments
+docker-compose.prod.yml
+todo.md
+oldreadme.md

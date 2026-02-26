@@ -1,0 +1,26 @@
+{% extends "core/base.html" %}
+
+{% block title %}Producer Login{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 520px; margin: 0 auto;">
+    <h1 style="margin-top: 0;">Producer Login</h1>
+    <p>UI placeholder</p>
+
+    <form method="post" action="#">
+        {% csrf_token %}
+        <p>
+            <label for="id_email">Email</label>
+            <input id="id_email" type="email" name="email" placeholder="producer@example.com" required>
+        </p>
+        <p>
+            <label for="id_password">Password</label>
+            <input id="id_password" type="password" name="password" placeholder="Enter password" required>
+        </p>
+        <div class="actions" style="margin-top: 1rem;">
+            <button type="submit" class="btn primary">Sign In</button>
+            <a class="btn" href="{% url 'core:producer-register' %}">Register</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

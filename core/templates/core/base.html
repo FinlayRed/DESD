@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Producer Products{% endblock %}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background: #f7f7f7;
+            color: #222;
+        }
+        header {
+            background: #1f4d3f;
+            color: #fff;
+            padding: 1rem 1.5rem;
+        }
+        main {
+            max-width: 900px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            border: 1px solid #1f4d3f;
+            color: #1f4d3f;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+        }
+        .btn.primary {
+            background: #1f4d3f;
+            color: #fff;
+        }
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            padding: 0.6rem 0.4rem;
+            vertical-align: top;
+        }
+        .errorlist {
+            color: #b00020;
+            margin: 0.4rem 0;
+        }
+        form p {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        input, select, textarea {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <strong>Producer Dashboard</strong>
+</header>
+<main>
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

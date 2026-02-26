@@ -1,0 +1,18 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if object %}Edit Product{% else %}Create Product{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">{% if object %}Edit Product{% else %}Create Product{% endif %}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="actions" style="margin-top: 1rem;">
+            <button type="submit" class="btn primary">Save</button>
+            <a href="{% url 'core:product-list' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

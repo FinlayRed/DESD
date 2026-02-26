@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+
+{% block title %}Producer Register{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 620px; margin: 0 auto;">
+    <h1 style="margin-top: 0;">Register as a Producer</h1>
+    <p>UI placeholder</p>
+
+    <form method="post" action="#">
+        {% csrf_token %}
+        <p>
+            <label for="id_business_name">Business Name</label>
+            <input id="id_business_name" type="text" name="business_name" placeholder="Bristol Farm Collective" required>
+        </p>
+        <p>
+            <label for="id_contact_name">Contact Name</label>
+            <input id="id_contact_name" type="text" name="contact_name" placeholder="Jane Smith" required>
+        </p>
+        <p>
+            <label for="id_email">Email</label>
+            <input id="id_email" type="email" name="email" placeholder="producer@example.com" required>
+        </p>
+        <p>
+            <label for="id_phone">Phone</label>
+            <input id="id_phone" type="tel" name="phone" placeholder="+44 7..." required>
+        </p>
+        <p>
+            <label for="id_password">Password</label>
+            <input id="id_password" type="password" name="password" placeholder="Create password" required>
+        </p>
+        <p>
+            <label for="id_confirm_password">Confirm Password</label>
+            <input id="id_confirm_password" type="password" name="confirm_password" placeholder="Repeat password" required>
+        </p>
+        <div class="actions" style="margin-top: 1rem;">
+            <button type="submit" class="btn primary">Create Account</button>
+            <a class="btn" href="{% url 'core:producer-login' %}">Return to Login</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
