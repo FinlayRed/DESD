@@ -5,33 +5,44 @@
 {% block content %}
 <div class="card" style="max-width: 620px; margin: 0 auto;">
     <h1 style="margin-top: 0;">Register as a Producer</h1>
-    <p>UI placeholder</p>
+    <p>Create your producer account.</p>
 
-    <form method="post" action="#">
+    <form method="post">
         {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            {{ form.non_field_errors }}
+        {% endif %}
+
         <p>
-            <label for="id_business_name">Business Name</label>
-            <input id="id_business_name" type="text" name="business_name" placeholder="Bristol Farm Collective" required>
+            {{ form.business_name.label_tag }}
+            {{ form.business_name }}
+            {{ form.business_name.errors }}
         </p>
         <p>
-            <label for="id_contact_name">Contact Name</label>
-            <input id="id_contact_name" type="text" name="contact_name" placeholder="Jane Smith" required>
+            {{ form.postcode.label_tag }}
+            {{ form.postcode }}
+            {{ form.postcode.errors }}
         </p>
         <p>
-            <label for="id_email">Email</label>
-            <input id="id_email" type="email" name="email" placeholder="producer@example.com" required>
+            {{ form.organic.label_tag }}
+            {{ form.organic }}
+            {{ form.organic.errors }}
         </p>
         <p>
-            <label for="id_phone">Phone</label>
-            <input id="id_phone" type="tel" name="phone" placeholder="+44 7..." required>
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {{ form.email.errors }}
         </p>
         <p>
-            <label for="id_password">Password</label>
-            <input id="id_password" type="password" name="password" placeholder="Create password" required>
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+            {{ form.password1.errors }}
         </p>
         <p>
-            <label for="id_confirm_password">Confirm Password</label>
-            <input id="id_confirm_password" type="password" name="confirm_password" placeholder="Repeat password" required>
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+            {{ form.password2.errors }}
         </p>
         <div class="actions" style="margin-top: 1rem;">
             <button type="submit" class="btn primary">Create Account</button>
