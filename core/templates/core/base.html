@@ -16,6 +16,13 @@
             color: #fff;
             padding: 1rem 1.5rem;
         }
+        header a {
+            color: inherit;
+            text-decoration: none;
+        }
+        header a:hover {
+            text-decoration: underline;
+        }
         main {
             max-width: 900px;
             margin: 1.5rem auto;
@@ -60,6 +67,17 @@
             color: #b00020;
             margin: 0.4rem 0;
         }
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem;
+        }
+        .messages li {
+            background: #fff4e5;
+            border: 1px solid #ffd8a8;
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+        }
         form p {
             display: flex;
             flex-direction: column;
@@ -74,9 +92,16 @@
 </head>
 <body>
 <header>
-    <strong>Producer Dashboard</strong>
+    <strong><a href="{% url 'core:home' %}">Producer Dashboard</a></strong>
 </header>
 <main>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     {% block content %}{% endblock %}
 </main>
 </body>

@@ -5,17 +5,24 @@
 {% block content %}
 <div class="card" style="max-width: 520px; margin: 0 auto;">
     <h1 style="margin-top: 0;">Producer Login</h1>
-    <p>UI placeholder</p>
+    <p>Sign in to manage your products.</p>
 
-    <form method="post" action="#">
+    <form method="post">
         {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            {{ form.non_field_errors }}
+        {% endif %}
+
         <p>
-            <label for="id_email">Email</label>
-            <input id="id_email" type="email" name="email" placeholder="producer@example.com" required>
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {{ form.email.errors }}
         </p>
         <p>
-            <label for="id_password">Password</label>
-            <input id="id_password" type="password" name="password" placeholder="Enter password" required>
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            {{ form.password.errors }}
         </p>
         <div class="actions" style="margin-top: 1rem;">
             <button type="submit" class="btn primary">Sign In</button>
