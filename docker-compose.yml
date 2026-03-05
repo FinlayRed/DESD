@@ -3,21 +3,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     environment:
-      SECRET_KEY: ${SECRET_KEY:-dev-only-insecure-secret-key}
-      DEBUG: ${DEBUG:-1}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-127.0.0.1,localhost}
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG1}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-app}
-      DB_USER: ${DB_USER:-app}
-      DB_PASS: ${DB_PASS:-app}
-      RUN_COLLECTSTATIC: ${RUN_COLLECTSTATIC:-0}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      RUN_COLLECTSTATIC: ${RUN_COLLECTSTATIC}
     depends_on:
       db:
         condition: service_healthy
@@ -26,11 +25,11 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-app}
-      POSTGRES_USER: ${DB_USER:-app}
-      POSTGRES_PASSWORD: ${DB_PASS:-app}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app} -d ${DB_NAME:-app}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 10

@@ -20,7 +20,7 @@ The repo for our DESD project.
 You will need docker installed. https://www.docker.com/products/docker-desktop/ is going to be the easiest.
 
 # Quickstart
-Make sure you're running this in the directory!
+Make sure you're running this in the directory.
 
 ```bash
 cp .env.example .env 
