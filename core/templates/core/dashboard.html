@@ -1,0 +1,151 @@
+{% extends "core/base.html" %}
+
+{% block title %}Producer Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Producer dashboard</div>
+        <h1>{{ producer.business_name }}</h1>
+        <p>Keep produce listings accurate, respond to orders with enough lead time, monitor postcode-based food miles, and review weekly settlement totals.</p>
+    </div>
+    <div class="chip-row">
+        {% if producer.organic %}<span class="badge">Organic producer</span>{% endif %}
+        <span class="badge">{{ producer.postcode }}</span>
+    </div>
+</div>
+
+<section class="grid three">
+    <article class="stat-card"><span class="eyebrow">Products</span><span class="stat-value">{{ product_count }}</span><p>{{ active_product_count }} active listings</p></article>
+    <article class="stat-card"><span class="eyebrow">Orders</span><span class="stat-value">{{ incoming_order_count }}</span><p>Producer-relevant orders in the system</p></article>
+    <article class="stat-card"><span class="eyebrow">Community</span><span class="stat-value">{{ surplus_count }}</span><p>Active surplus offers and {{ content_count }} published stories or guides</p></article>
+</section>
+
+<section class="grid two" style="margin-top: 1rem;">
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>Incoming order items</h2>
+                <p>Producer-side responsibilities with lead-time warnings.</p>
+            </div>
+            <a href="{% url 'core:order-list' %}" class="btn secondary">View all orders</a>
+        </div>
+        {% if incoming_items %}
+            <ul class="list-reset">
+                {% for item in incoming_items %}
+                    <li class="list-item">
+                        <div class="actions" style="justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <strong>{{ item.product.name }}</strong>
+                                <p class="meta" style="margin: 0.3rem 0 0;">{{ item.quantity }} units for {{ item.order.reference }}{% if item.order.fulfilment_date %} · needed {{ item.order.fulfilment_date }}{% endif %}</p>
+                            </div>
+                            <div class="chip-row">
+                                <span class="badge">{{ item.get_status_display }}</span>
+                                {% if item.food_miles != None %}<span class="badge">{{ item.food_miles }} miles</span>{% endif %}
+                                {% if item.lead_time_warning %}<span class="badge alert">Under 48h lead time</span>{% endif %}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">No producer order items yet.</p>
+        {% endif %}
+    </article>
+
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>Weekly settlements</h2>
+                <p>Transparent totals with the network commission already calculated.</p>
+            </div>
+            <a href="{% url 'core:settlement-list' %}" class="btn secondary">Settlement history</a>
+        </div>
+        {% if pending_settlements %}
+            <ul class="list-reset">
+                {% for settlement in pending_settlements %}
+                    <li class="list-item">
+                        <div class="actions" style="justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <strong>Week of {{ settlement.week_start }}</strong>
+                                <p class="meta" style="margin: 0.3rem 0 0;">Gross {{ settlement.gross_amount }} · Commission {{ settlement.commission_amount }} · Net {{ settlement.net_amount }}</p>
+                            </div>
+                            <a href="{% url 'core:settlement-detail' settlement.pk %}" class="btn">Open</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">No pending settlements yet. Paid order items will appear here automatically.</p>
+        {% endif %}
+    </article>
+</section>
+
+<section class="grid three" style="margin-top: 1rem;">
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>Low stock</h2>
+                <p>Spot items that may need a seasonal update.</p>
+            </div>
+            <a href="{% url 'core:product-list' %}?visibility=low-stock" class="btn secondary">Review stock</a>
+        </div>
+        {% if low_stock_products %}
+            <ul class="list-reset">
+                {% for product in low_stock_products %}
+                    <li class="list-item">
+                        <strong>{{ product.name }}</strong>
+                        <p class="meta" style="margin: 0.3rem 0 0;">{{ product.stock_quantity }} left · {{ product.available_window }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">No low-stock warnings right now.</p>
+        {% endif %}
+    </article>
+
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>Surplus listings</h2>
+                <p>Last-minute discounts to reduce waste.</p>
+            </div>
+            <a href="{% url 'core:surplus-list' %}" class="btn secondary">Manage surplus</a>
+        </div>
+        {% if active_surplus %}
+            <ul class="list-reset">
+                {% for listing in active_surplus %}
+                    <li class="list-item">
+                        <strong>{{ listing.product.name }}</strong>
+                        <p class="meta" style="margin: 0.3rem 0 0;">{{ listing.discount_percent }}% off until {{ listing.available_until|date:"d M Y H:i" }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">No active surplus offers.</p>
+        {% endif %}
+    </article>
+
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>Stories & guides</h2>
+                <p>Recipes, storage advice, and farm stories.</p>
+            </div>
+            <a href="{% url 'core:content-list' %}" class="btn secondary">Manage content</a>
+        </div>
+        {% if recent_content %}
+            <ul class="list-reset">
+                {% for content in recent_content %}
+                    <li class="list-item">
+                        <strong>{{ content.title }}</strong>
+                        <p class="meta" style="margin: 0.3rem 0 0;">{{ content.get_content_type_display }}{% if content.season %} · {{ content.season }}{% endif %}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">No published content yet.</p>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ order.reference }}{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Order detail</div>
+        <h1>{{ order.reference }}</h1>
+        <p>{{ order.customer_display_name }} · {{ order.get_delivery_method_display }}{% if order.fulfilment_date %} · fulfil by {{ order.fulfilment_date }}{% endif %}</p>
+    </div>
+    <div class="chip-row">
+        <span class="badge">{{ order.get_status_display }}</span>
+        {% if order.paid %}<span class="badge">Paid</span>{% endif %}
+        {% if order.delivery_postcode %}<span class="badge">{{ order.delivery_postcode }}</span>{% endif %}
+    </div>
+</div>
+
+<section class="grid two">
+    <article class="card stack">
+        <h2>Customer and fulfilment details</h2>
+        <p class="meta">Customer email: {{ order.customer_email|default:order.customer.email|default:"-" }}</p>
+        <p class="meta">Notes: {{ order.notes|default:"No customer notes supplied." }}</p>
+    </article>
+    <article class="card stack">
+        <h2>Producer responsibilities</h2>
+        <p>Each item below is scoped to your products only, even when the order contains multiple vendors.</p>
+    </article>
+</section>
+
+<div class="card" style="margin-top: 1rem;">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Traceability</th>
+                    <th>Distance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in producer_items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.product.name }}</strong>
+                            <p class="meta" style="margin: 0.35rem 0 0;">{{ item.price }} each</p>
+                        </td>
+                        <td>{{ item.quantity }}</td>
+                        <td>
+                            <span class="badge">{{ item.get_status_display }}</span>
+                            {% if item.lead_time_warning %}<div style="margin-top: 0.35rem;"><span class="badge alert">Under 48h lead time</span></div>{% endif %}
+                        </td>
+                        <td>
+                            <div>{{ item.product.display_origin }}</div>
+                            <p class="meta" style="margin: 0.35rem 0 0;">{% if item.product.harvest_date %}Harvest {{ item.product.harvest_date }}{% endif %}{% if item.product.best_before_date %} · Best before {{ item.product.best_before_date }}{% endif %}</p>
+                        </td>
+                        <td>{% if item.food_miles != None %}{{ item.food_miles }} miles{% else %}-{% endif %}</td>
+                        <td><a href="{% url 'core:order-item-update' item.pk %}" class="btn">Update item</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

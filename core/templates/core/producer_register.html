@@ -1,53 +1,81 @@
 {% extends "core/base.html" %}
+{% load static %}
 
 {% block title %}Producer Register{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/producer-form.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 620px; margin: 0 auto;">
-    <h1 style="margin-top: 0;">Register as a Producer</h1>
-    <p>Create your producer account.</p>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Producer onboarding</div>
+        <h1>Create your producer account</h1>
+        <p>Start publishing produce, receiving supplier-ready order information, and keeping your payment trail in one place.</p>
+    </div>
+</div>
 
-    <form method="post">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-            {{ form.non_field_errors }}
-        {% endif %}
-
-        <p>
-            {{ form.business_name.label_tag }}
-            {{ form.business_name }}
-            {{ form.business_name.errors }}
-        </p>
-        <p>
-            {{ form.postcode.label_tag }}
-            {{ form.postcode }}
-            {{ form.postcode.errors }}
-        </p>
-        <p>
-            {{ form.organic.label_tag }}
-            {{ form.organic }}
-            {{ form.organic.errors }}
-        </p>
-        <p>
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {{ form.email.errors }}
-        </p>
-        <p>
-            {{ form.password1.label_tag }}
-            {{ form.password1 }}
-            {{ form.password1.errors }}
-        </p>
-        <p>
-            {{ form.password2.label_tag }}
-            {{ form.password2 }}
-            {{ form.password2.errors }}
-        </p>
-        <div class="actions" style="margin-top: 1rem;">
-            <button type="submit" class="btn primary">Create Account</button>
-            <a class="btn" href="{% url 'core:producer-login' %}">Return to Login</a>
-        </div>
-    </form>
+<div class="minimal-form-wrap">
+    <div class="minimal-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <div class="form-row two-col">
+                <div class="form-field{% if form.business_name.errors %} has-error{% endif %}">
+                    <label for="{{ form.business_name.id_for_label }}">Business name <span class="required">*</span></label>
+                    {{ form.business_name }}
+                    {{ form.business_name.errors }}
+                </div>
+                
+                <div class="form-field{% if form.postcode.errors %} has-error{% endif %}">
+                    <label for="{{ form.postcode.id_for_label }}">Postcode <span class="required">*</span></label>
+                    {{ form.postcode }}
+                    {{ form.postcode.errors }}
+                </div>
+            </div>
+            
+            <div class="form-field">
+                <label class="checkbox-field">
+                    {{ form.organic }}
+                    <span>
+                        <span class="checkbox-label">Organic certified producer</span>
+                    </span>
+                </label>
+                {{ form.organic.errors }}
+            </div>
+            
+            <div class="form-field{% if form.email.errors %} has-error{% endif %}">
+                <label for="{{ form.email.id_for_label }}">Email <span class="required">*</span></label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            
+            <div class="form-row two-col">
+                <div class="form-field{% if form.password1.errors %} has-error{% endif %}">
+                    <label for="{{ form.password1.id_for_label }}">Password <span class="required">*</span></label>
+                    {{ form.password1 }}
+                    {{ form.password1.errors }}
+                </div>
+                
+                <div class="form-field{% if form.password2.errors %} has-error{% endif %}">
+                    <label for="{{ form.password2.id_for_label }}">Confirm password <span class="required">*</span></label>
+                    {{ form.password2 }}
+                    {{ form.password2.errors }}
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Create producer account</button>
+                <a class="btn-secondary" href="{% url 'core:producer-login' %}">I already have an account</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

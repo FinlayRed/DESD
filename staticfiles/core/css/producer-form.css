@@ -1,0 +1,351 @@
+/* =====================================================
+   Minimal Producer Form Styles
+   Simple, clean design matching site conventions
+   ===================================================== */
+
+/* Form Container */
+.minimal-form-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.minimal-form {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+/* Form Header */
+.minimal-form-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.minimal-form-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 8px;
+}
+
+.minimal-form-header p {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Form Sections */
+.form-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.form-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #1f4d3f;
+  margin: 0 0 16px;
+}
+
+/* Form Fields */
+.form-field {
+  margin-bottom: 16px;
+}
+
+.form-field:last-child {
+  margin-bottom: 0;
+}
+
+.form-field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field input[type="email"],
+.form-field input[type="password"],
+.form-field input[type="date"],
+.form-field input[type="url"],
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #222;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: #1f4d3f;
+  box-shadow: 0 0 0 2px rgba(31, 77, 63, 0.1);
+}
+
+.form-field textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.form-field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23555' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* Field Help Text */
+.field-help {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* Two Column Grid */
+.form-row {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+.form-row.two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.form-row .form-field {
+  margin-bottom: 0;
+}
+
+/* Price Input with Prefix */
+.input-with-prefix {
+  display: flex;
+  align-items: stretch;
+}
+
+.input-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.input-with-prefix input {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Checkbox Field */
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex-shrink: 0;
+  accent-color: #1f4d3f;
+  cursor: pointer;
+}
+
+.checkbox-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+}
+
+.checkbox-help {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 2px;
+}
+
+/* Error States */
+.errorlist {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.errorlist li {
+  font-size: 0.8rem;
+  color: #c00;
+  padding: 6px 10px;
+  background: #fff5f5;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.form-field.has-error input,
+.form-field.has-error select,
+.form-field.has-error textarea {
+  border-color: #c00;
+}
+
+/* Non-field Errors */
+.form-errors {
+  padding: 12px 16px;
+  background: #fff5f5;
+  border: 1px solid #fdd;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.form-errors .errorlist {
+  margin: 0;
+}
+
+.form-errors .errorlist li {
+  background: transparent;
+  padding: 4px 0;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.form-actions .btn-primary,
+.form-actions button.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(40, 110, 240, 0.95);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.form-actions .btn-primary:hover,
+.form-actions button.primary:hover {
+  background: #286ef0;
+}
+
+.form-actions .btn-primary:focus,
+.form-actions button.primary:focus {
+  outline: 2px solid #286ef0;
+  outline-offset: 2px;
+}
+
+.form-actions .btn-secondary,
+.form-actions a.secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  color: #555;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.form-actions .btn-secondary:hover,
+.form-actions a.secondary:hover {
+  border-color: #aaa;
+  color: #333;
+}
+
+/* Required/Optional Indicators */
+.required {
+  color: #c00;
+  font-weight: 500;
+}
+
+.optional {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #888;
+  margin-left: 4px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .minimal-form {
+    padding: 16px;
+  }
+  
+  .form-row.two-col {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary,
+  .form-actions button.primary,
+  .form-actions a.secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .form-field input,
+  .form-field select,
+  .form-field textarea,
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary {
+    transition: none;
+  }
+}
