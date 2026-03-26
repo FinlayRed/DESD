@@ -35,3 +35,5 @@ dist/
 docker-compose.prod.yml
 todo.md
 oldreadme.md
+
+staticfiles/
