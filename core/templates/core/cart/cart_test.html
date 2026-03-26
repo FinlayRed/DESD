@@ -1,0 +1,55 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Cart Test - DEV{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Cart Test Page (DEV ONLY)</h1>
+    
+    <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+        <strong>Note:</strong> This page is for development testing only.
+    </div>
+    
+    {% if products %}
+    <table class="min-w-full bg-white border">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="px-4 py-2 border">Product</th>
+                <th class="px-4 py-2 border">Producer</th>
+                <th class="px-4 py-2 border">Price</th>
+                <th class="px-4 py-2 border">Stock</th>
+                <th class="px-4 py-2 border">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td class="px-4 py-2 border">{{ product.name }}</td>
+                <td class="px-4 py-2 border">{{ product.producer.business_name }}</td>
+                <td class="px-4 py-2 border">£{{ product.price }}</td>
+                <td class="px-4 py-2 border">{{ product.stock_quantity }}</td>
+                <td class="px-4 py-2 border">
+                    <form action="{% url 'core:cart-add' product.id %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                            Add
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-gray-600">No active products available.</p>
+    {% endif %}
+    
+    <div class="mt-6">
+        <a href="{% url 'core:cart' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            View Cart
+        </a>
+    </div>
+</div>
+{% endblock %}

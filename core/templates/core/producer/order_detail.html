@@ -1,0 +1,188 @@
+{% extends "core/base.html" %}
+
+{% block title %}Order #{{ order.id }} Details{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+    
+    <!-- Back link -->
+    <a href="{% url 'core:producer-orders' %}" class="text-gray-500 hover:text-gray-700 text-sm mb-4 inline-block">
+        ← Back to Orders
+    </a>
+    
+    <!-- Order header -->
+    <div class="flex flex-wrap justify-between items-start gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">Order #{{ order.id }}</h1>
+            <p class="text-gray-500">Received {{ order.created_at|date:"j M Y, H:i" }}</p>
+        </div>
+        
+        <!-- Status badge -->
+        {% if order.status == 'confirmed' %}
+            <span class="px-4 py-2 bg-blue-100 text-blue-800 font-medium rounded-full">
+                New Order
+            </span>
+        {% elif order.status == 'processing' %}
+            <span class="px-4 py-2 bg-purple-100 text-purple-800 font-medium rounded-full">
+                Preparing
+            </span>
+        {% elif order.status == 'ready' %}
+            <span class="px-4 py-2 bg-green-100 text-green-800 font-medium rounded-full">
+                Ready for Collection
+            </span>
+        {% endif %}
+    </div>
+    
+    <!-- Multi-vendor notice -->
+    {% if is_multi_vendor %}
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+        <div class="flex items-start">
+            <svg class="w-5 h-5 text-amber-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+                <h3 class="font-medium text-amber-800">Multi-vendor order</h3>
+                <p class="text-sm text-amber-700 mt-1">
+                    This order includes products from other producers. Below are only <strong>your items</strong> 
+                    that you need to prepare.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Your items to prepare -->
+    <div class="bg-white rounded-lg shadow-sm border mb-6">
+        <div class="px-6 py-4 border-b bg-green-50">
+            <h2 class="font-semibold text-lg text-green-800">Your Items to Prepare</h2>
+            <p class="text-sm text-green-600">{{ items|length }} item{{ items|length|pluralize }}</p>
+        </div>
+        
+        <div class="divide-y">
+            {% for item in items %}
+            <div class="px-6 py-4">
+                <div class="flex justify-between mb-2">
+                    <span class="font-medium text-lg">{{ item.product.name }}</span>
+                    <span class="font-bold text-lg">£{{ item.line_total }}</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500">Quantity:</span>
+                        <span class="font-medium ml-2">{{ item.quantity }}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Unit price:</span>
+                        <span class="ml-2">£{{ item.unit_price }}</span>
+                    </div>
+                </div>
+                
+                {% if item.allergen_info_snapshot %}
+                <div class="mt-3 p-3 bg-amber-50 rounded text-sm">
+                    <strong class="text-amber-800">Allergen info:</strong>
+                    <span class="text-amber-700">{{ item.allergen_info_snapshot }}</span>
+                </div>
+                {% endif %}
+                
+                {% if item.best_before_snapshot %}
+                <div class="mt-2 text-sm text-gray-500">
+                    <strong>Best before:</strong> {{ item.best_before_snapshot|date:"j M Y" }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Your subtotal -->
+        <div class="px-6 py-4 bg-gray-50 border-t">
+            <div class="flex justify-between font-bold text-lg">
+                <span>Your Portion</span>
+                <span class="text-green-700">£{{ subtotal }}</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+                After 5% network commission: £{{ subtotal|floatformat:2 }} × 0.95 = £{{ subtotal|add:"-0.05"|floatformat:2 }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Customer & Collection details -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        
+        <!-- Customer info -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <h3 class="font-semibold mb-4">Customer Information</h3>
+            
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm text-gray-500">Name</p>
+                    <p class="font-medium">{{ order.customer.get_full_name|default:order.customer.username }}</p>
+                </div>
+                
+                {% if order.delivery_postcode %}
+                <div>
+                    <p class="text-sm text-gray-500">Postcode</p>
+                    <p class="font-medium">{{ order.delivery_postcode }}</p>
+                </div>
+                {% endif %}
+                
+                {% if order.delivery_address %}
+                <div>
+                    <p class="text-sm text-gray-500">Address</p>
+                    <p class="font-medium">{{ order.delivery_address }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Collection info -->
+        <div class="bg-white rounded-lg shadow-sm border p-6">
+            <h3 class="font-semibold mb-4">Collection Details</h3>
+            
+            {% if order.collection_date %}
+            <div class="mb-4">
+                <p class="text-sm text-gray-500">Requested Collection Date</p>
+                <p class="font-medium text-lg">{{ order.collection_date|date:"l, j M Y" }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="p-3 bg-blue-50 rounded text-sm text-blue-800">
+                <strong>Note:</strong> Please contact the customer to confirm 
+                collection/delivery arrangements.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <h3 class="font-semibold mb-4">Update Status</h3>
+        
+        <div class="flex flex-wrap gap-3">
+            {% if order.status == 'confirmed' %}
+            <form action="{% url 'core:producer-order-status' order.pk %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="processing">
+                <button type="submit" class="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700">
+                    Start Preparing
+                </button>
+            </form>
+            {% elif order.status == 'processing' %}
+            <form action="{% url 'core:producer-order-status' order.pk %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="ready">
+                <button type="submit" class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
+                    Mark as Ready for Collection
+                </button>
+            </form>
+            {% elif order.status == 'ready' %}
+            <div class="flex items-center text-green-600">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                Items ready for customer collection
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

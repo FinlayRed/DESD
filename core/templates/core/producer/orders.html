@@ -1,0 +1,111 @@
+{% extends "core/base.html" %}
+
+{% block title %}Incoming Orders{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Incoming Orders</h1>
+    
+    {% if orders %}
+        <div class="space-y-4">
+            {% for order_id, order_data in orders.items %}
+            <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <!-- Order header -->
+                <div class="px-6 py-4 border-b bg-gray-50 flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <h2 class="font-semibold">Order #{{ order_data.order.id }}</h2>
+                        <p class="text-sm text-gray-500">
+                            {{ order_data.order.created_at|date:"j M Y, H:i" }}
+                            • Customer: {{ order_data.order.customer.username }}
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <!-- Status -->
+                        {% if order_data.order.status == 'confirmed' %}
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                                New Order
+                            </span>
+                        {% elif order_data.order.status == 'processing' %}
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">
+                                Preparing
+                            </span>
+                        {% elif order_data.order.status == 'ready' %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                                Ready
+                            </span>
+                        {% endif %}
+                        
+                        <!-- Your portion value -->
+                        <span class="font-bold text-lg text-green-700">£{{ order_data.subtotal }}</span>
+                    </div>
+                </div>
+                
+                <!-- Your items in this order -->
+                <div class="px-6 py-4">
+                    <p class="text-sm text-gray-500 mb-3">Your items to prepare:</p>
+                    
+                    <div class="space-y-2">
+                        {% for item in order_data.items %}
+                        <div class="flex justify-between items-center bg-gray-50 px-4 py-2 rounded">
+                            <div>
+                                <span class="font-medium">{{ item.product.name }}</span>
+                                <span class="text-gray-500 ml-2">× {{ item.quantity }}</span>
+                            </div>
+                            <span>£{{ item.line_total }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Collection info -->
+                {% if order_data.order.collection_date %}
+                <div class="px-6 py-3 bg-amber-50 border-t">
+                    <p class="text-sm text-amber-800">
+                        <strong>Collection requested:</strong> 
+                        {{ order_data.order.collection_date|date:"l, j M Y" }}
+                    </p>
+                </div>
+                {% endif %}
+                
+                <!-- Actions -->
+                <div class="px-6 py-3 bg-gray-50 border-t flex justify-between items-center">
+                    <a href="{% url 'core:producer-order-detail' order_data.order.pk %}" 
+                       class="text-green-600 hover:text-green-800 font-medium text-sm">
+                        View Details →
+                    </a>
+                    
+                    {% if order_data.order.status == 'confirmed' %}
+                    <form action="{% url 'core:producer-order-status' order_data.order.pk %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="processing">
+                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">
+                            Start Preparing
+                        </button>
+                    </form>
+                    {% elif order_data.order.status == 'processing' %}
+                    <form action="{% url 'core:producer-order-status' order_data.order.pk %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="ready">
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                            Mark Ready
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-gray-100 rounded-lg p-8 text-center">
+            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+            <p class="text-gray-600 mb-4">No incoming orders yet.</p>
+            <p class="text-sm text-gray-500">
+                Orders will appear here when customers purchase your products.
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

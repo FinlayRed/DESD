@@ -1,0 +1,189 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Checkout</h1>
+    
+    {% if not cart or cart|length == 0 %}
+        <div class="bg-gray-100 rounded-lg p-8 text-center">
+            <p class="text-gray-600 mb-4">Your basket is empty.</p>
+            <a href="{% url 'core:home' %}" class="btn btn-primary">Browse Products</a>
+        </div>
+    {% else %}
+    
+    <form method="post" id="checkout-form">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left column: Order details -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Multi-vendor order explanation -->
+                {% if is_multi_vendor %}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-medium text-blue-800 mb-2">Multi-vendor order</h3>
+                    <p class="text-sm text-blue-700">
+                        Your order includes products from <strong>{{ producer_count }} producers</strong>. 
+                        Each producer is responsible for preparing their items. You will receive 
+                        separate confirmation for each producer's items.
+                    </p>
+                </div>
+                {% endif %}
+                
+                <!-- Items by producer (clear supplier separation) -->
+                <div class="bg-white rounded-lg shadow-sm border">
+                    <div class="px-6 py-4 border-b">
+                        <h2 class="font-semibold text-lg">Order Items by Producer</h2>
+                        <p class="text-sm text-gray-500">Each producer will prepare their items separately</p>
+                    </div>
+                    
+                    {% for producer_id, producer_data in items_by_producer.items %}
+                    <div class="border-b last:border-b-0">
+                        <!-- Producer header -->
+                        <div class="bg-green-50 px-6 py-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-medium text-green-800">
+                                        {{ producer_data.producer.business_name }}
+                                    </h3>
+                                    <p class="text-xs text-green-600">
+                                        Location: {{ producer_data.producer.postcode }}
+                                    </p>
+                                </div>
+                                <span class="font-bold">£{{ producer_data.subtotal }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Producer's items -->
+                        <div class="px-6 py-3 space-y-2">
+                            {% for item in producer_data.items %}
+                            <div class="flex justify-between text-sm">
+                                <span>
+                                    {{ item.product.name }} × {{ item.quantity }}
+                                    {% if item.product.allergen_info %}
+                                    <span class="text-amber-600 text-xs">(Contains allergens)</span>
+                                    {% endif %}
+                                </span>
+                                <span>£{{ item.total_price }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Producer delivery info -->
+                        <div class="bg-gray-50 px-6 py-3 text-sm">
+                            <p class="text-gray-600">
+                                <strong>Delivery/Collection:</strong> 
+                                This producer will contact you to arrange collection or delivery.
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Collection details -->
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h2 class="font-semibold text-lg mb-4">Collection Details</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Your Postcode *
+                            </label>
+                            <input type="text" name="postcode" required
+                                   class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                   placeholder="e.g., BS1 4DJ">
+                            <p class="text-xs text-gray-500 mt-1">
+                                Used to calculate food miles for environmental reporting
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Delivery Address (optional)
+                            </label>
+                            <textarea name="address" rows="3"
+                                      class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                      placeholder="Full delivery address if applicable"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Preferred Collection Date *
+                            </label>
+                            <input type="date" name="collection_date" required
+                                   min="{{ min_collection_date|date:'Y-m-d' }}"
+                                   class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <p class="text-xs text-gray-500 mt-1">
+                                <strong>48-hour lead time required.</strong> 
+                                Earliest date: {{ min_collection_date|date:"D, j M Y" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Right column: Order summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-sm border p-6 sticky top-4">
+                    <h2 class="font-semibold text-lg mb-4">Order Summary</h2>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Items ({{ cart|length }})</span>
+                            <span>£{{ total }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between text-gray-500">
+                            <span>Network commission (5%)</span>
+                            <span>£{{ network_commission|floatformat:2 }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between text-gray-500 text-xs">
+                            <span>Producer receives</span>
+                            <span>£{{ producer_total|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t mt-4 pt-4">
+                        <div class="flex justify-between font-bold text-lg">
+                            <span>Total to pay</span>
+                            <span>£{{ total }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment info -->
+                    <div class="mt-6 space-y-3">
+                        <button type="submit" 
+                                class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                            Continue to Payment
+                        </button>
+                        
+                        <div class="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Secure payment via Stripe</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Trust badges -->
+                    <div class="mt-6 pt-4 border-t">
+                        <p class="text-xs text-gray-500 text-center mb-3">We protect your data</p>
+                        <div class="flex justify-center space-x-4 text-xs text-gray-400">
+                            <span>GDPR Compliant</span>
+                            <span>•</span>
+                            <span>PCI-DSS Secure</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    {% endif %}
+</div>
+{% endblock %}

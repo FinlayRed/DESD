@@ -20,7 +20,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     list_display = ("name", "category", "price", "is_active", "producer", "updated_at")
     list_filter = ("category", "is_active")
-    search_fields = ("name", "description", "producer__user__username")
+    search_fields = ("name", "description", "producer__user__username") 
 
 
 @admin.register(Order)
