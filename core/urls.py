@@ -1,5 +1,5 @@
 from django.contrib.auth.views import LogoutView
-from django.urls import path
+from django.urls import include, path
 
 from .views import (
     HomeView,
@@ -30,6 +30,7 @@ app_name = "core"
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("admin-reports/", include("core.admin_urls")),
     path("producer/dashboard/", ProducerDashboardView.as_view(), name="dashboard"),
     path("producer/login/", ProducerLoginView.as_view(), name="producer-login"),
     path("producer/logout/", LogoutView.as_view(next_page="core:home"), name="producer-logout"),
