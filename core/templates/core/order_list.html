@@ -7,14 +7,14 @@
     <div>
         <div class="eyebrow">Orders</div>
         <h1>Incoming producer orders</h1>
-        <p>See only the order items assigned to your products, together with delivery method, fulfilment date, producer notes, and lead-time risk.</p>
+        <p>See incoming orders from your customers.</p>
     </div>
 </div>
 
 <div class="card stack">
     <form method="get" class="filters">
         <select name="status">
-            <option value="">All item statuses</option>
+            <option value="">All items</option>
             {% for value, label in item_statuses %}
                 <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}

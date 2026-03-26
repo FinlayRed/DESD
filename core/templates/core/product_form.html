@@ -15,7 +15,7 @@
             
             <header class="minimal-form-header">
                 <h1>{% if object %}Update product listing{% else %}Create a product listing{% endif %}</h1>
-                <p>Capture the details producers need for seasonal trading, traceability, and reliable fulfilment.</p>
+                <p>Change an existing product's details</p>
             </header>
             
             {% if form.non_field_errors %}
@@ -31,14 +31,12 @@
                     <div class="form-field{% if form.name.errors %} has-error{% endif %}">
                         <label for="{{ form.name.id_for_label }}">Product name <span class="required">*</span></label>
                         {{ form.name }}
-                        <span class="field-help">A clear, descriptive name customers will see</span>
                         {{ form.name.errors }}
                     </div>
                     
                     <div class="form-field{% if form.category.errors %} has-error{% endif %}">
                         <label for="{{ form.category.id_for_label }}">Category <span class="required">*</span></label>
                         {{ form.category }}
-                        <span class="field-help">Helps buyers find your product</span>
                         {{ form.category.errors }}
                     </div>
                 </div>
@@ -46,7 +44,6 @@
                 <div class="form-field{% if form.description.errors %} has-error{% endif %}">
                     <label for="{{ form.description.id_for_label }}">Description <span class="optional">(optional)</span></label>
                     {{ form.description }}
-                    <span class="field-help">Describe flavour, texture, suggested uses, or what makes this product special</span>
                     {{ form.description.errors }}
                 </div>
                 
@@ -89,7 +86,6 @@
                     <div class="form-field{% if form.minimum_order_quantity.errors %} has-error{% endif %}">
                         <label for="{{ form.minimum_order_quantity.id_for_label }}">Minimum order <span class="optional">(optional)</span></label>
                         {{ form.minimum_order_quantity }}
-                        <span class="field-help">Minimum units per order, if any</span>
                         {{ form.minimum_order_quantity.errors }}
                     </div>
                 </div>
@@ -98,7 +94,7 @@
                     <div class="form-field{% if form.lead_time_hours.errors %} has-error{% endif %}">
                         <label for="{{ form.lead_time_hours.id_for_label }}">Lead time (hours) <span class="optional">(optional)</span></label>
                         {{ form.lead_time_hours }}
-                        <span class="field-help">Hours needed to prepare an order</span>
+                        <span class="field-help">Minimum 48 hours</span>
                         {{ form.lead_time_hours.errors }}
                     </div>
                     
@@ -123,14 +119,12 @@
                     <div class="form-field{% if form.available_from.errors %} has-error{% endif %}">
                         <label for="{{ form.available_from.id_for_label }}">Available from <span class="optional">(optional)</span></label>
                         {{ form.available_from }}
-                        <span class="field-help">When this product becomes available</span>
                         {{ form.available_from.errors }}
                     </div>
                     
                     <div class="form-field{% if form.available_to.errors %} has-error{% endif %}">
                         <label for="{{ form.available_to.id_for_label }}">Available until <span class="optional">(optional)</span></label>
                         {{ form.available_to }}
-                        <span class="field-help">Last date of availability</span>
                         {{ form.available_to.errors }}
                     </div>
                 </div>
@@ -139,14 +133,12 @@
                     <div class="form-field{% if form.harvest_date.errors %} has-error{% endif %}">
                         <label for="{{ form.harvest_date.id_for_label }}">Harvest date <span class="optional">(optional)</span></label>
                         {{ form.harvest_date }}
-                        <span class="field-help">When the product was harvested</span>
                         {{ form.harvest_date.errors }}
                     </div>
                     
                     <div class="form-field{% if form.best_before_date.errors %} has-error{% endif %}">
                         <label for="{{ form.best_before_date.id_for_label }}">Best before <span class="optional">(optional)</span></label>
                         {{ form.best_before_date }}
-                        <span class="field-help">Recommended use-by date</span>
                         {{ form.best_before_date.errors }}
                     </div>
                 </div>

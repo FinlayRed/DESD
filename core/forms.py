@@ -128,7 +128,7 @@ class ProductForm(forms.ModelForm):
             "available_to": forms.DateInput(attrs={"type": "date"}),
             "harvest_date": forms.DateInput(attrs={"type": "date"}),
             "best_before_date": forms.DateInput(attrs={"type": "date"}),
-            "farm_origin": forms.TextInput(attrs={"placeholder": "e.g., Sunnyside Farm, Somerset"}),
+            "farm_origin": forms.TextInput(attrs={"placeholder": "e.g., Farmy Farm, Somerset"}),
             "seasonal_highlight": forms.TextInput(attrs={"placeholder": "e.g., Summer favourite"}),
             "allergen_info": forms.Textarea(attrs={
                 "rows": 3,
