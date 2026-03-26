@@ -7,6 +7,9 @@
     <h1 style="margin-top: 0;">Project Links</h1>
     <p>Quick links to the main pages built so far.</p>
     <ul>
+        <li><a href="{% url 'core:customer-product-list' %}"><strong>Browse produce</strong> (customer shop — search &amp; categories)</a></li>
+        <li><a href="{% url 'core:customer-login' %}">Customer login</a> · <a href="{% url 'core:customer-register' %}">Customer register</a> · <a href="{% url 'core:customer-logout' %}">Sign out</a></li>
+        <li><a href="{% url 'core:customer-checkout' %}">Checkout</a> (select items on the browse page first)</li>
         <li><a href="{% url 'core:producer-login' %}">Producer Login</a></li>
         <li><a href="{% url 'core:producer-register' %}">Producer Register</a></li>
         <li><a href="{% url 'core:product-list' %}">Producer Product List</a></li>
