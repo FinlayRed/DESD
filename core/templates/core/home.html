@@ -1,18 +1,96 @@
 {% extends "core/base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Bristol Regional Food Network{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">Project Links</h1>
-    <p>Quick links to the main pages built so far.</p>
-    <ul>
-        <li><a href="{% url 'core:producer-login' %}">Producer Login</a></li>
-        <li><a href="{% url 'core:producer-register' %}">Producer Register</a></li>
-        <li><a href="{% url 'core:product-list' %}">Producer Product List</a></li>
-        <li><a href="{% url 'core:product-create' %}">Create Product</a></li>
-        <li><a href="/admin/">Admin</a></li>
-        <li><a href="/admin/login/">Admin Login</a></li>
-    </ul>
+<div class="card" style="text-align: center; padding: 2rem;">
+    <h1 style="margin-top: 0; font-size: 2rem;">Bristol Regional Food Network</h1>
+    <p class="lead" style="font-size: 1.1rem;">
+        Connecting Bristol with local food producers within a 20-mile radius.
+    </p>
+</div>
+
+<div class="card-grid" style="margin-top: 1.5rem;">
+    <a href="{% url 'core:customer-product-list' %}" class="link-card" style="padding: 1.5rem;">
+        <strong style="font-size: 1.1rem;">🛒 Shop Local</strong>
+        <span>Browse fresh produce from local farms and food producers</span>
+    </a>
+    
+    <a href="{% url 'core:customer-login' %}" class="link-card" style="padding: 1.5rem;">
+        <strong style="font-size: 1.1rem;">👤 Customer Login</strong>
+        <span>Sign in to your account to place orders</span>
+    </a>
+    
+    <a href="{% url 'core:producer-login' %}" class="link-card" style="padding: 1.5rem;">
+        <strong style="font-size: 1.1rem;">🌾 Producer Login</strong>
+        <span>Manage your products and orders</span>
+    </a>
+    
+    <a href="{% url 'core:producer-register' %}" class="link-card" style="padding: 1.5rem;">
+        <strong style="font-size: 1.1rem;">✨ Become a Producer</strong>
+        <span>Join the network and sell to local customers</span>
+    </a>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h2 style="margin-top: 0;">Why Bristol Regional Food Network?</h2>
+    
+    <div class="stack">
+        <div class="card" style="background: #f9fafb;">
+            <h3 style="margin-top: 0;">🥬 Fresh & Local</h3>
+            <p class="lead" style="margin-bottom: 0;">
+                All products come from producers within 20 miles of Bristol, ensuring freshness and supporting the local economy.
+            </p>
+        </div>
+        
+        <div class="card" style="background: #f9fafb;">
+            <h3 style="margin-top: 0;">🌱 Know Your Food</h3>
+            <p class="lead" style="margin-bottom: 0;">
+                Full traceability from farm to table. See exactly where your food comes from and how it's produced.
+            </p>
+        </div>
+        
+        <div class="card" style="background: #f9fafb;">
+            <h3 style="margin-top: 0;">🤝 Fair for Producers</h3>
+            <p class="lead" style="margin-bottom: 0;">
+                Only 5% network commission means producers keep 95% of the sale price. Weekly settlements ensure reliable income.
+            </p>
+        </div>
+        
+        <div class="card" style="background: #f9fafb;">
+            <h3 style="margin-top: 0;">♻️ Sustainable</h3>
+            <p class="lead" style="margin-bottom: 0;">
+                Reduced food miles, seasonal eating, and direct relationships between customers and producers.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem; background: #ecfdf5; border-color: #a7f3d0;">
+    <h2 style="margin-top: 0; color: #065f46;">How It Works</h2>
+    
+    <ol style="color: #065f46; margin-bottom: 0; padding-left: 1.25rem;">
+        <li style="margin-bottom: 0.75rem;">
+            <strong>Browse</strong> — Explore products from local farms, dairies, bakeries, and more
+        </li>
+        <li style="margin-bottom: 0.75rem;">
+            <strong>Order</strong> — Add items to your basket (48-hour lead time for fresh preparation)
+        </li>
+        <li style="margin-bottom: 0.75rem;">
+            <strong>Pay</strong> — Secure payment, with 95% going directly to producers
+        </li>
+        <li style="margin-bottom: 0;">
+            <strong>Collect</strong> — Pick up from the producer or arrange local delivery
+        </li>
+    </ol>
+</div>
+
+<div class="card actions" style="margin-top: 1.5rem; justify-content: center;">
+    <a href="{% url 'core:customer-product-list' %}" class="btn primary" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
+        Start Shopping
+    </a>
+    <a href="{% url 'core:customer-register' %}" class="btn" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
+        Create Account
+    </a>
 </div>
 {% endblock %}

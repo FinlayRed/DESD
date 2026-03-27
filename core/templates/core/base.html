@@ -1,108 +1,74 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Producer Products{% endblock %}</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            background: #f7f7f7;
-            color: #222;
-        }
-        header {
-            background: #1f4d3f;
-            color: #fff;
-            padding: 1rem 1.5rem;
-        }
-        header a {
-            color: inherit;
-            text-decoration: none;
-        }
-        header a:hover {
-            text-decoration: underline;
-        }
-        main {
-            max-width: 900px;
-            margin: 1.5rem auto;
-            padding: 0 1rem;
-        }
-        .card {
-            background: #fff;
-            border: 1px solid #e5e5e5;
-            border-radius: 8px;
-            padding: 1rem;
-        }
-        .btn {
-            display: inline-block;
-            text-decoration: none;
-            border: 1px solid #1f4d3f;
-            color: #1f4d3f;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            background: #fff;
-            cursor: pointer;
-        }
-        .btn.primary {
-            background: #1f4d3f;
-            color: #fff;
-        }
-        .actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            padding: 0.6rem 0.4rem;
-            vertical-align: top;
-        }
-        .errorlist {
-            color: #b00020;
-            margin: 0.4rem 0;
-        }
-        .messages {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 1rem;
-        }
-        .messages li {
-            background: #fff4e5;
-            border: 1px solid #ffd8a8;
-            border-radius: 6px;
-            padding: 0.6rem 0.8rem;
-        }
-        form p {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        input, select, textarea {
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-    </style>
+    <title>{% block title %}Bristol Regional Food Network{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-<header>
-    <strong><a href="{% url 'core:home' %}">Producer Dashboard</a></strong>
-</header>
-<main>
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    {% block content %}{% endblock %}
-</main>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="container topbar-inner">
+            <a href="{% url 'core:home' %}" class="brand">Bristol Regional Food Network</a>
+            
+            <nav class="topnav">
+                {% if user.is_authenticated %}
+                    {% if user.producer %}
+                        <!-- Producer Navigation -->
+                        <a href="{% url 'core:product-list' %}">My Products</a>
+                        <a href="{% url 'core:product-create' %}">Add Product</a>
+                        <a href="{% url 'core:producer-orders' %}">Orders</a>
+                        <span class="user-pill">{{ user.producer.business_name }}</span>
+                        <a href="{% url 'core:customer-logout' %}">Logout</a>
+                    {% else %}
+                        <!-- Customer Navigation -->
+                        <a href="{% url 'core:customer-product-list' %}">Browse Products</a>
+                        <a href="{% url 'core:cart' %}">
+                            Basket
+                            {% if cart_count %}({{ cart_count }}){% endif %}
+                        </a>
+                        <a href="{% url 'core:customer-orders' %}">My Orders</a>
+                        <span class="user-pill">{{ user.email }}</span>
+                        <a href="{% url 'core:customer-logout' %}">Logout</a>
+                    {% endif %}
+                {% else %}
+                    <!-- Guest Navigation -->
+                    <a href="{% url 'core:customer-product-list' %}">Browse Products</a>
+                    <a href="{% url 'core:customer-login' %}">Customer Login</a>
+                    <a href="{% url 'core:producer-login' %}">Producer Login</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Django Messages -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="lead" style="text-align: center; padding: 2rem 0; margin: 0;">
+                &copy; 2026 Bristol Regional Food Network — Supporting local food producers within 20 miles of Bristol
+            </p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

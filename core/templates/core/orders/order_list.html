@@ -3,103 +3,62 @@
 {% block title %}My Orders{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">My Orders</h1>
-    
-    {% if orders %}
-        <div class="space-y-4">
-            {% for order in orders %}
-            <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
-                <!-- Order header -->
-                <div class="px-6 py-4 border-b bg-gray-50 flex flex-wrap justify-between items-center gap-4">
-                    <div>
-                        <h2 class="font-semibold">Order #{{ order.id }}</h2>
-                        <p class="text-sm text-gray-500">{{ order.created_at|date:"j M Y, H:i" }}</p>
-                    </div>
-                    
-                    <div class="flex items-center gap-4">
-                        <!-- Status badge -->
-                        {% if order.status == 'pending' %}
-                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
-                                Pending Payment
-                            </span>
-                        {% elif order.status == 'confirmed' %}
-                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                                Confirmed
-                            </span>
-                        {% elif order.status == 'processing' %}
-                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">
-                                Being Prepared
-                            </span>
-                        {% elif order.status == 'ready' %}
-                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                                Ready for Collection
-                            </span>
-                        {% elif order.status == 'delivered' %}
-                            <span class="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
-                                Delivered
-                            </span>
-                        {% elif order.status == 'cancelled' %}
-                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
-                                Cancelled
-                            </span>
-                        {% endif %}
-                        
-                        <span class="font-bold text-lg">£{{ order.total_amount }}</span>
-                    </div>
+<div class="card">
+    <h1 style="margin-top: 0;">My Orders</h1>
+    <p class="lead">View your order history and track current orders.</p>
+</div>
+
+{% if orders %}
+    <div class="stack" style="margin-top: 1rem;">
+        {% for order in orders %}
+            <div class="card">
+                <div class="actions space-between" style="margin-bottom: 0.75rem;">
+                    <h3 style="margin: 0;">Order #{{ order.id }}</h3>
+                    <span class="badge 
+                        {% if order.status == 'pending' %}badge-pending
+                        {% elif order.status == 'confirmed' %}badge-confirmed
+                        {% elif order.status == 'processing' %}badge-processing
+                        {% elif order.status == 'ready' %}badge-ready
+                        {% elif order.status == 'delivered' %}badge-delivered
+                        {% elif order.status == 'cancelled' %}badge-cancelled
+                        {% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
                 </div>
                 
-                <!-- Order items preview -->
-                <div class="px-6 py-4">
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        {% for item in order.items.all|slice:":3" %}
-                            <span class="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                                {{ item.product_name }} × {{ item.quantity }}
-                            </span>
-                        {% endfor %}
-                        {% if order.items.count > 3 %}
-                            <span class="text-sm text-gray-500">
-                                +{{ order.items.count|add:"-3" }} more items
-                            </span>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td class="lead">Order Date</td>
+                            <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+                        </tr>
+                        {% if order.collection_date %}
+                        <tr>
+                            <td class="lead">Collection Date</td>
+                            <td style="text-align: right;">{{ order.collection_date|date:"D, d M Y" }}</td>
+                        </tr>
                         {% endif %}
-                    </div>
-                    
-                    {% if order.is_multi_vendor %}
-                        <p class="text-sm text-blue-600">
-                            <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                            </svg>
-                            Multi-vendor order
-                        </p>
-                    {% endif %}
-                    
-                    {% if order.collection_date %}
-                        <p class="text-sm text-gray-500 mt-2">
-                            <strong>Collection:</strong> {{ order.collection_date|date:"l, j M Y" }}
-                        </p>
-                    {% endif %}
-                </div>
+                        <tr>
+                            <td class="lead">Items</td>
+                            <td style="text-align: right;">{{ order.items.count }} item{{ order.items.count|pluralize }}</td>
+                        </tr>
+                        <tr>
+                            <td class="lead">Total</td>
+                            <td style="text-align: right;"><strong>£{{ order.total_amount }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
                 
-                <!-- Actions -->
-                <div class="px-6 py-3 bg-gray-50 border-t">
-                    <a href="{% url 'core:customer-order-detail' order.pk %}" 
-                       class="text-green-600 hover:text-green-800 font-medium text-sm">
-                        View Details →
-                    </a>
+                <div class="actions" style="margin-top: 0.75rem;">
+                    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary small">View Details</a>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="bg-gray-100 rounded-lg p-8 text-center">
-            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-            </svg>
-            <p class="text-gray-600 mb-4">You haven't placed any orders yet.</p>
-            <a href="{% url 'core:home' %}" class="inline-block px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
-                Start Shopping
-            </a>
-        </div>
-    {% endif %}
-</div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">You haven't placed any orders yet.</p>
+        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
+    </div>
+{% endif %}
 {% endblock %}

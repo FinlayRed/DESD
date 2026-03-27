@@ -1,182 +1,126 @@
 {% extends "core/base.html" %}
-{% load static %}
 
-{% block title %}Payment{% endblock %}
-
-{% block extra_head %}
-<script src="https://js.stripe.com/v3/"></script>
-{% endblock %}
+{% block title %}Payment - Order #{{ order.id }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 max-w-2xl">
-    <h1 class="text-2xl font-bold mb-6">Payment</h1>
+<div class="card">
+    <h1 style="margin-top: 0;">Payment</h1>
+    <p class="lead">Complete your payment to confirm your order.</p>
+</div>
+
+<!-- Order Summary -->
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Order #{{ order.id }}</h2>
     
-    <!-- Order summary -->
-    <div class="bg-white rounded-lg shadow-sm border mb-6">
-        <div class="px-6 py-4 border-b">
-            <h2 class="font-semibold">Order #{{ order.id }}</h2>
-            <p class="text-sm text-gray-500">Created {{ order.created_at|date:"j M Y, H:i" }}</p>
+    <table>
+        <tbody>
+            <tr>
+                <td>Order Date</td>
+                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+            </tr>
+            {% if order.collection_date %}
+            <tr>
+                <td>Collection Date</td>
+                <td style="text-align: right;">{{ order.collection_date|date:"D, d M Y" }}</td>
+            </tr>
+            {% endif %}
+            {% if order.delivery_postcode %}
+            <tr>
+                <td>Delivery Postcode</td>
+                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Items by Producer -->
+<div class="stack" style="margin-top: 1rem;">
+    {% for producer_id, vendor in items_by_producer.items %}
+        <div class="card">
+            <h3 style="margin-top: 0;">{{ vendor.producer.business_name }}</h3>
+            <p class="lead">{{ vendor.producer.postcode }}</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in vendor.items %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>£{{ item.price }}</td>
+                            <td>£{{ item.line_total }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
+                        <td><strong>£{{ vendor.subtotal }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
-        
-        <!-- Items by producer -->
-        {% for producer_id, producer_data in items_by_producer.items %}
-        <div class="px-6 py-3 border-b last:border-b-0">
-            <p class="font-medium text-green-700 text-sm mb-2">
-                {{ producer_data.producer.business_name }}
-            </p>
-            {% for item in producer_data.items %}
-            <div class="flex justify-between text-sm text-gray-600">
-                <span>{{ item.product_name }} × {{ item.quantity }}</span>
-                <span>£{{ item.line_total }}</span>
-            </div>
-            {% endfor %}
-        </div>
-        {% endfor %}
-        
-        <div class="px-6 py-4 bg-gray-50">
-            <div class="flex justify-between font-bold">
-                <span>Total</span>
-                <span>£{{ payment.total_amount }}</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">
-                Includes 5% network commission (£{{ payment.network_commission }})
-            </p>
-        </div>
+    {% endfor %}
+</div>
+
+<!-- Payment Summary -->
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Payment Summary</h2>
+    
+    <table>
+        <tbody>
+            <tr>
+                <td>Subtotal</td>
+                <td style="text-align: right;">£{{ payment.total_amount }}</td>
+            </tr>
+            <tr>
+                <td>Network Commission (5%)</td>
+                <td style="text-align: right;">£{{ payment.network_commission }}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr style="font-size: 1.2em;">
+                <td><strong>Total to Pay</strong></td>
+                <td style="text-align: right;"><strong>£{{ payment.total_amount }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <p class="lead" style="margin-top: 1rem;">
+        Producers will receive £{{ payment.producer_amount }} after network commission.
+    </p>
+</div>
+
+<!-- Payment Form (Stripe Placeholder) -->
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Card Details</h2>
+    
+    <div class="card" style="background: #f3f5f8; border-style: dashed;">
+        <p class="lead" style="margin: 0; text-align: center;">
+            <strong>Stripe Payment Integration</strong><br>
+            Payment form will appear here when Stripe is configured.<br>
+            For testing, use the "Simulate Payment" button below.
+        </p>
     </div>
     
-    <!-- Stripe payment form -->
-    <div class="bg-white rounded-lg shadow-sm border p-6">
-        <h2 class="font-semibold mb-4">Payment Details</h2>
-        
-        <form id="payment-form">
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Card Information
-                </label>
-                <div id="card-element" class="border rounded-lg p-4 bg-gray-50">
-                    <!-- Stripe Card Element will be inserted here -->
-                </div>
-                <div id="card-errors" class="text-red-500 text-sm mt-2" role="alert"></div>
-            </div>
-            
-            <button type="submit" id="submit-button"
-                    class="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                <span id="button-text">Pay £{{ payment.total_amount }}</span>
-                <span id="spinner" class="hidden">
-                    <svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                    </svg>
-                </span>
-            </button>
-        </form>
-        
-        <div class="mt-4 flex items-center justify-center space-x-2 text-xs text-gray-500">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-            </svg>
-            <span>Secured by Stripe. Your card details never touch our servers.</span>
-        </div>
-        
-        <!-- Test card info (sandbox only) -->
-        <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p class="text-sm font-medium text-yellow-800 mb-2">🧪 Test Mode</p>
-            <p class="text-xs text-yellow-700">
-                Use test card: <code class="bg-yellow-100 px-1 rounded">4242 4242 4242 4242</code><br>
-                Any future date, any CVC, any postcode.
-            </p>
-        </div>
+    <div class="actions" style="margin-top: 1rem; justify-content: center;">
+        <a href="{% url 'core:payment-success' order_id=order.id %}" class="btn primary">
+            Simulate Successful Payment
+        </a>
     </div>
 </div>
 
-<script>
-// Initialize Stripe
-const stripe = Stripe('{{ stripe_public_key }}');
-const elements = stripe.elements();
-
-// Create card element
-const cardElement = elements.create('card', {
-    style: {
-        base: {
-            fontSize: '16px',
-            color: '#1a1a1a',
-            '::placeholder': {
-                color: '#9ca3af',
-            },
-        },
-        invalid: {
-            color: '#ef4444',
-        },
-    },
-});
-cardElement.mount('#card-element');
-
-// Handle validation errors
-cardElement.on('change', function(event) {
-    const displayError = document.getElementById('card-errors');
-    if (event.error) {
-        displayError.textContent = event.error.message;
-    } else {
-        displayError.textContent = '';
-    }
-});
-
-// Handle form submission
-const form = document.getElementById('payment-form');
-const submitButton = document.getElementById('submit-button');
-
-form.addEventListener('submit', async function(event) {
-    event.preventDefault();
-    
-    // Disable button and show spinner
-    submitButton.disabled = true;
-    document.getElementById('button-text').classList.add('hidden');
-    document.getElementById('spinner').classList.remove('hidden');
-    
-    try {
-        // Create PaymentIntent
-        const response = await fetch('{% url "core:payment-create-intent" order.id %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}',
-            },
-        });
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        // Confirm payment with Stripe
-        const { error, paymentIntent } = await stripe.confirmCardPayment(
-            data.client_secret,
-            {
-                payment_method: {
-                    card: cardElement,
-                },
-            }
-        );
-        
-        if (error) {
-            throw new Error(error.message);
-        }
-        
-        if (paymentIntent.status === 'succeeded') {
-            // Redirect to success page
-            window.location.href = '{% url "core:payment-success" order.id %}';
-        }
-        
-    } catch (error) {
-        // Show error
-        document.getElementById('card-errors').textContent = error.message;
-        
-        // Re-enable button
-        submitButton.disabled = false;
-        document.getElementById('button-text').classList.remove('hidden');
-        document.getElementById('spinner').classList.add('hidden');
-    }
-});
-</script>
+<!-- Actions -->
+<div class="card actions space-between" style="margin-top: 1rem;">
+    <a href="{% url 'core:checkout' %}" class="btn">Back to Checkout</a>
+    <span class="lead">Secure payment powered by Stripe</span>
+</div>
 {% endblock %}

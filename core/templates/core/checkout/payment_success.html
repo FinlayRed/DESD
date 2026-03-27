@@ -1,107 +1,57 @@
 {% extends "core/base.html" %}
 
-{% block title %}Payment Successful{% endblock %}
+{% block title %}Order Confirmed - #{{ order.id }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 max-w-2xl">
+<div class="card" style="text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">✓</div>
+    <h1 style="margin-top: 0; color: #059669;">Order Confirmed!</h1>
+    <p class="lead">Thank you for supporting local Bristol producers.</p>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Order #{{ order.id }}</h2>
     
-    <!-- Success message -->
-    <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-        </div>
-        <h1 class="text-2xl font-bold text-green-800">Payment Successful!</h1>
-        <p class="text-gray-600 mt-2">Thank you for supporting local producers.</p>
-    </div>
-    
-    <!-- Order confirmation -->
-    <div class="bg-white rounded-lg shadow-sm border mb-6">
-        <div class="px-6 py-4 border-b bg-gray-50">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="font-semibold">Order #{{ order.id }}</h2>
-                    <p class="text-sm text-gray-500">{{ order.created_at|date:"j M Y, H:i" }}</p>
-                </div>
-                <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                    {{ order.get_status_display }}
-                </span>
-            </div>
-        </div>
-        
-        <!-- Items by producer -->
-        <div class="divide-y">
-            {% for producer_id, producer_data in items_by_producer.items %}
-            <div class="px-6 py-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-medium text-green-700">
-                        {{ producer_data.producer.business_name }}
-                    </h3>
-                    <span class="text-sm text-gray-500">
-                        {{ producer_data.producer.postcode }}
-                    </span>
-                </div>
-                
-                {% for item in producer_data.items %}
-                <div class="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>{{ item.product_name }} × {{ item.quantity }}</span>
-                    <span>£{{ item.line_total }}</span>
-                </div>
-                {% endfor %}
-                
-                <div class="mt-3 p-3 bg-blue-50 rounded text-sm text-blue-800">
-                    <strong>Collection:</strong> {{ producer_data.producer.business_name }} will contact you 
-                    to arrange collection or delivery for their items.
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        
-        <!-- Order total -->
-        <div class="px-6 py-4 bg-gray-50 border-t">
-            <div class="flex justify-between font-bold">
-                <span>Total Paid</span>
-                <span>£{{ order.payment.total_amount }}</span>
-            </div>
+    <table>
+        <tbody>
+            <tr>
+                <td>Status</td>
+                <td style="text-align: right;">
+                    <span class="badge badge-confirmed">{{ order.get_status_display }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>Order Date</td>
+                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+            </tr>
             {% if order.collection_date %}
-            <p class="text-sm text-gray-500 mt-2">
-                <strong>Requested collection date:</strong> {{ order.collection_date|date:"l, j M Y" }}
-            </p>
+            <tr>
+                <td>Collection Date</td>
+                <td style="text-align: right;"><strong>{{ order.collection_date|date:"D, d M Y" }}</strong></td>
+            </tr>
             {% endif %}
-        </div>
-    </div>
-    
-    <!-- What's next -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-        <h3 class="font-semibold text-blue-800 mb-3">What happens next?</h3>
-        <ol class="space-y-2 text-sm text-blue-700">
-            <li class="flex items-start">
-                <span class="font-bold mr-2">1.</span>
-                Each producer will receive your order details
-            </li>
-            <li class="flex items-start">
-                <span class="font-bold mr-2">2.</span>
-                They will prepare your items (48hr minimum lead time)
-            </li>
-            <li class="flex items-start">
-                <span class="font-bold mr-2">3.</span>
-                You'll be contacted about collection/delivery arrangements
-            </li>
-        </ol>
-    </div>
-    
-    <!-- Actions -->
-    <div class="flex flex-col sm:flex-row gap-4">
-        <a href="{% url 'core:customer-orders' %}" 
-           class="flex-1 text-center py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
-            View My Orders
-        </a>
-        <a href="{% url 'core:home' %}" 
-           class="flex-1 text-center py-3 px-4 border border-gray-300 rounded-lg font-medium hover:bg-gray-50">
-            Continue Shopping
-        </a>
-    </div>
-    
+            {% if order.delivery_postcode %}
+            <tr>
+                <td>Delivery Postcode</td>
+                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 1rem; background: #ecfdf5; border-color: #a7f3d0;">
+    <h3 style="margin-top: 0; color: #065f46;">What Happens Next?</h3>
+    <ol style="color: #065f46; margin-bottom: 0;">
+        <li style="margin-bottom: 0.5rem;">Each producer will receive your order details</li>
+        <li style="margin-bottom: 0.5rem;">They will prepare your items for collection</li>
+        <li style="margin-bottom: 0.5rem;">You'll be notified when items are ready</li>
+        <li>Collect from the producer or arrange delivery</li>
+    </ol>
+</div>
+
+<div class="card actions space-between" style="margin-top: 1rem;">
+    <a href="{% url 'core:customer-product-list' %}" class="btn">Continue Shopping</a>
+    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary">View Order Details</a>
 </div>
 {% endblock %}

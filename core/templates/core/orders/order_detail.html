@@ -3,191 +3,136 @@
 {% block title %}Order #{{ order.id }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 max-w-3xl">
-    
-    <!-- Back link -->
-    <a href="{% url 'core:customer-orders' %}" class="text-gray-500 hover:text-gray-700 text-sm mb-4 inline-block">
-        ← Back to My Orders
-    </a>
-    
-    <!-- Order header -->
-    <div class="flex flex-wrap justify-between items-start gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-bold">Order #{{ order.id }}</h1>
-            <p class="text-gray-500">Placed on {{ order.created_at|date:"j M Y, H:i" }}</p>
-        </div>
-        
-        <!-- Status badge -->
-        {% if order.status == 'pending' %}
-            <span class="px-4 py-2 bg-yellow-100 text-yellow-800 font-medium rounded-full">
-                Pending Payment
-            </span>
-        {% elif order.status == 'confirmed' %}
-            <span class="px-4 py-2 bg-blue-100 text-blue-800 font-medium rounded-full">
-                Payment Confirmed
-            </span>
-        {% elif order.status == 'processing' %}
-            <span class="px-4 py-2 bg-purple-100 text-purple-800 font-medium rounded-full">
-                Being Prepared
-            </span>
-        {% elif order.status == 'ready' %}
-            <span class="px-4 py-2 bg-green-100 text-green-800 font-medium rounded-full">
-                Ready for Collection
-            </span>
-        {% elif order.status == 'delivered' %}
-            <span class="px-4 py-2 bg-gray-100 text-gray-800 font-medium rounded-full">
-                Delivered
-            </span>
-        {% elif order.status == 'cancelled' %}
-            <span class="px-4 py-2 bg-red-100 text-red-800 font-medium rounded-full">
-                Cancelled
-            </span>
-        {% endif %}
+<div class="card">
+    <div class="actions space-between">
+        <h1 style="margin: 0;">Order #{{ order.id }}</h1>
+        <span class="badge 
+            {% if order.status == 'pending' %}badge-pending
+            {% elif order.status == 'confirmed' %}badge-confirmed
+            {% elif order.status == 'processing' %}badge-processing
+            {% elif order.status == 'ready' %}badge-ready
+            {% elif order.status == 'delivered' %}badge-delivered
+            {% elif order.status == 'cancelled' %}badge-cancelled
+            {% endif %}" style="font-size: 1rem;">
+            {{ order.get_status_display }}
+        </span>
     </div>
+</div>
+
+<!-- Order Info -->
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Order Information</h2>
     
-    <!-- Multi-vendor notice -->
-    {% if order.is_multi_vendor %}
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div class="flex items-start">
-            <svg class="w-5 h-5 text-blue-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-            </svg>
-            <div>
-                <h3 class="font-medium text-blue-800">Multi-vendor order</h3>
-                <p class="text-sm text-blue-700 mt-1">
-                    This order contains products from multiple producers. Each producer is responsible 
-                    for their items and will arrange collection/delivery separately.
+    <table>
+        <tbody>
+            <tr>
+                <td>Order Date</td>
+                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+            </tr>
+            {% if order.collection_date %}
+            <tr>
+                <td>Collection Date</td>
+                <td style="text-align: right;"><strong>{{ order.collection_date|date:"D, d M Y" }}</strong></td>
+            </tr>
+            {% endif %}
+            {% if order.delivery_postcode %}
+            <tr>
+                <td>Delivery Postcode</td>
+                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
+            </tr>
+            {% endif %}
+            {% if order.delivery_address %}
+            <tr>
+                <td>Delivery Address</td>
+                <td style="text-align: right;">{{ order.delivery_address }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Items by Producer -->
+<div class="stack" style="margin-top: 1rem;">
+    {% for producer_id, vendor in items_by_producer.items %}
+        <div class="card">
+            <h3 style="margin-top: 0;">{{ vendor.producer.business_name }}</h3>
+            <p class="lead">{{ vendor.producer.postcode }} 
+                {% if vendor.producer.organic %}
+                    <span class="badge badge-confirmed">Organic Producer</span>
+                {% endif %}
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in vendor.items %}
+                        <tr>
+                            <td>
+                                {{ item.product.name }}
+                                {% if item.product.allergen_info %}
+                                    <br><small class="lead">Allergens: {{ item.product.allergen_info }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>£{{ item.price }}</td>
+                            <td>£{{ item.line_total }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
+                        <td><strong>£{{ vendor.subtotal }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="card" style="margin-top: 0.85rem; background: #fbfcfd;">
+                <h4 style="margin-top: 0;">Collection Details</h4>
+                <p class="lead" style="margin-bottom: 0;">
+                    Contact this producer directly to arrange collection or delivery.
                 </p>
             </div>
         </div>
-    </div>
-    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Order Total -->
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Order Total</h2>
     
-    <!-- Items grouped by producer -->
-    <div class="bg-white rounded-lg shadow-sm border mb-6">
-        <div class="px-6 py-4 border-b">
-            <h2 class="font-semibold text-lg">Order Items</h2>
-        </div>
-        
-        {% for producer_id, producer_data in items_by_producer.items %}
-        <div class="border-b last:border-b-0">
-            <!-- Producer header -->
-            <div class="bg-green-50 px-6 py-3">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="font-medium text-green-800">
-                            {{ producer_data.producer.business_name }}
-                        </h3>
-                        <p class="text-xs text-green-600">
-                            Location: {{ producer_data.producer.postcode }}
-                            {% if producer_data.producer.organic %}
-                                • Organic Certified
-                            {% endif %}
-                        </p>
-                    </div>
-                    <span class="font-bold">£{{ producer_data.subtotal }}</span>
-                </div>
-            </div>
-            
-            <!-- Items from this producer -->
-            <div class="divide-y">
-                {% for item in producer_data.items %}
-                <div class="px-6 py-4">
-                    <div class="flex justify-between mb-1">
-                        <span class="font-medium">{{ item.product_name }}</span>
-                        <span class="font-medium">£{{ item.line_total }}</span>
-                    </div>
-                    <div class="text-sm text-gray-500">
-                        {{ item.quantity }} × £{{ item.unit_price }}
-                    </div>
-                    
-                    {% if item.allergen_info_snapshot %}
-                    <div class="mt-2 text-xs text-amber-600">
-                        <strong>Allergens:</strong> {{ item.allergen_info_snapshot }}
-                    </div>
-                    {% endif %}
-                    
-                    {% if item.best_before_snapshot %}
-                    <div class="text-xs text-gray-500 mt-1">
-                        Best before: {{ item.best_before_snapshot|date:"j M Y" }}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    
-    <!-- Order details -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        
-        <!-- Delivery info -->
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <h3 class="font-semibold mb-4">Collection Details</h3>
-            
-            {% if order.collection_date %}
-            <div class="mb-3">
-                <p class="text-sm text-gray-500">Requested Date</p>
-                <p class="font-medium">{{ order.collection_date|date:"l, j M Y" }}</p>
-            </div>
+    <table>
+        <tbody>
+            <tr>
+                <td>Subtotal</td>
+                <td style="text-align: right;">£{{ order.total_amount }}</td>
+            </tr>
+            {% if order.payment %}
+            <tr>
+                <td>Network Commission (5%)</td>
+                <td style="text-align: right;">£{{ order.payment.network_commission }}</td>
+            </tr>
             {% endif %}
-            
-            {% if order.delivery_postcode %}
-            <div class="mb-3">
-                <p class="text-sm text-gray-500">Your Postcode</p>
-                <p class="font-medium">{{ order.delivery_postcode }}</p>
-            </div>
-            {% endif %}
-            
-            {% if order.delivery_address %}
-            <div>
-                <p class="text-sm text-gray-500">Delivery Address</p>
-                <p class="font-medium">{{ order.delivery_address }}</p>
-            </div>
-            {% endif %}
-        </div>
-        
-        <!-- Payment summary -->
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <h3 class="font-semibold mb-4">Payment Summary</h3>
-            
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Subtotal</span>
-                    <span>£{{ order.payment.total_amount }}</span>
-                </div>
-                <div class="flex justify-between text-gray-400">
-                    <span>Network fee (5%)</span>
-                    <span>£{{ order.payment.network_commission }}</span>
-                </div>
-            </div>
-            
-            <div class="border-t mt-4 pt-4">
-                <div class="flex justify-between font-bold text-lg">
-                    <span>Total Paid</span>
-                    <span>£{{ order.payment.total_amount }}</span>
-                </div>
-            </div>
-            
-            {% if order.payment.status == 'completed' %}
-            <div class="mt-4 flex items-center text-sm text-green-600">
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                Payment completed {{ order.payment.completed_at|date:"j M Y" }}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Help section -->
-    <div class="bg-gray-50 rounded-lg p-6 text-center">
-        <p class="text-gray-600 mb-2">Need help with your order?</p>
-        <p class="text-sm text-gray-500">
-            Contact the producer directly or reach out to Bristol Regional Food Network support.
-        </p>
-    </div>
-    
+        </tbody>
+        <tfoot>
+            <tr style="font-size: 1.1em;">
+                <td><strong>Total Paid</strong></td>
+                <td style="text-align: right;"><strong>£{{ order.total_amount }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<!-- Actions -->
+<div class="card actions space-between" style="margin-top: 1rem;">
+    <a href="{% url 'core:customer-orders' %}" class="btn">Back to Orders</a>
+    <a href="{% url 'core:customer-product-list' %}" class="btn primary">Continue Shopping</a>
 </div>
 {% endblock %}

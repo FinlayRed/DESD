@@ -1,0 +1,94 @@
+{% extends "core/base.html" %}
+
+{% block title %}Browse Products{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">Browse Products</h1>
+    <p class="lead">Fresh, local produce from Bristol-area producers.</p>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-top: 1rem;">
+    <form method="get" action="" class="actions" style="flex-wrap: wrap;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search products..." 
+               style="flex: 1; min-width: 200px;">
+        
+        <select name="category" style="min-width: 150px;">
+            <option value="">All Categories</option>
+            {% for key in category_keys %}
+                <option value="{{ key }}" {% if active_category == key %}selected{% endif %}>
+                    {{ key|title }}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit" class="btn primary">Search</button>
+        
+        {% if query or active_category %}
+            <a href="{% url 'core:customer-product-list' %}" class="btn">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Products by Category -->
+{% for category_key, category_products in grouped_products.items %}
+    {% if category_products %}
+        <div class="card" style="margin-top: 1.5rem;">
+            <h2 style="margin-top: 0;">{{ category_key|title }}</h2>
+            
+            <div class="product-grid">
+                {% for product in category_products %}
+                    <div class="product-card">
+                        <h3>{{ product.name }}</h3>
+                        <p class="producer">{{ product.producer.business_name }}</p>
+                        <p class="lead" style="font-size: 0.9rem;">{{ product.description|truncatewords:20 }}</p>
+                        
+                        <div class="actions" style="flex-wrap: wrap; gap: 0.25rem;">
+                            {% if product.organic %}
+                                <span class="badge badge-confirmed">Organic</span>
+                            {% endif %}
+                            {% if product.seasonal_status %}
+                                <span class="badge 
+                                    {% if product.seasonal_status == 'In season' %}badge-ready
+                                    {% elif product.seasonal_status == 'Upcoming season' %}badge-pending
+                                    {% else %}badge-cancelled
+                                    {% endif %}">
+                                    {{ product.seasonal_status }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="price" style="margin-top: 0.5rem;">£{{ product.price }}</p>
+                        
+                        <div class="actions" style="margin-top: auto;">
+                            {% if product.stock_quantity > 0 %}
+                                <form action="{% url 'core:cart-add' product.id %}" method="post" class="actions">
+                                    {% csrf_token %}
+                                    <input type="number" name="quantity" value="1" min="1" 
+                                           max="{{ product.stock_quantity }}" class="quantity-input" 
+                                           style="width: 50px;">
+                                    <button type="submit" class="btn primary small">Add</button>
+                                </form>
+                                <span class="lead" style="font-size: 0.8rem;">{{ product.stock_quantity }} in stock</span>
+                            {% else %}
+                                <span class="badge badge-cancelled">Out of Stock</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% empty %}
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">No products found matching your criteria.</p>
+        <a href="{% url 'core:customer-product-list' %}" class="btn">View All Products</a>
+    </div>
+{% endfor %}
+
+<!-- Cart Link -->
+<div class="card actions" style="margin-top: 1.5rem; justify-content: center;">
+    <a href="{% url 'core:cart' %}" class="btn primary">View Basket</a>
+</div>
+{% endblock %}

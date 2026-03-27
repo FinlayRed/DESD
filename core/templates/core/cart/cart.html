@@ -1,142 +1,106 @@
 {% extends "core/base.html" %}
-{% load static %}
 
-{% block title %}Shopping Basket{% endblock %}
+{% block title %}Your Basket{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Your Basket</h1>
-    
-    {% if cart|length == 0 %}
-        <div class="bg-gray-100 rounded-lg p-8 text-center">
-            <p class="text-gray-600 mb-4">Your basket is empty.</p>
-            <a href="{% url 'core:home' %}" class="btn btn-primary">
-                Browse Products
-            </a>
-        </div>
-    {% else %}
-        
-        <!-- Multi-vendor notice -->
-        {% if is_multi_vendor %}
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div class="flex items-start">
-                <svg class="w-5 h-5 text-blue-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                </svg>
-                <div>
-                    <h3 class="font-medium text-blue-800">Multi-vendor order</h3>
-                    <p class="text-sm text-blue-700 mt-1">
-                        Your basket contains products from <strong>{{ producer_count }} different producers</strong>. 
-                        Each producer will prepare their items separately, and you may have different collection/delivery arrangements for each.
-                    </p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- Items grouped by producer -->
-        {% for producer_id, producer_data in items_by_producer.items %}
-        <div class="bg-white rounded-lg shadow-sm border mb-6">
-            <!-- Producer header -->
-            <div class="bg-green-50 border-b px-6 py-4 rounded-t-lg">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="font-semibold text-lg text-green-800">
-                            {{ producer_data.producer.business_name }}
-                        </h2>
-                        <p class="text-sm text-green-600">
-                            {{ producer_data.producer.postcode }}
-                            {% if producer_data.producer.organic %}
-                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                    Organic Certified
-                                </span>
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-500">Subtotal</p>
-                        <p class="font-bold text-lg">£{{ producer_data.subtotal }}</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Producer's items -->
-            <div class="divide-y">
-                {% for item in producer_data.items %}
-                <div class="px-6 py-4 flex items-center">
-                    <div class="flex-1">
-                        <h3 class="font-medium">{{ item.product.name }}</h3>
-                        <p class="text-sm text-gray-500">£{{ item.price }} each</p>
-                        {% if item.product.allergen_info %}
-                        <p class="text-xs text-amber-600 mt-1">
-                            <strong>Allergens:</strong> {{ item.product.allergen_info }}
-                        </p>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Quantity controls -->
-                    <div class="flex items-center space-x-3">
-                        <form action="{% url 'core:cart-update' item.product.id %}" method="post" class="flex items-center">
-                            {% csrf_token %}
-                            <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" 
-                                    class="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100">
-                                -
-                            </button>
-                            <span class="w-12 text-center font-medium">{{ item.quantity }}</span>
-                            <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}"
-                                    class="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-100">
-                                +
-                            </button>
-                        </form>
-                        
-                        <p class="w-20 text-right font-medium">£{{ item.total_price }}</p>
-                        
-                        <form action="{% url 'core:cart-remove' item.product.id %}" method="post">
-                            {% csrf_token %}
-                            <button type="submit" class="text-red-500 hover:text-red-700 p-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
-        
-        <!-- Order summary -->
-        <div class="bg-white rounded-lg shadow-sm border p-6">
-            <h2 class="font-semibold text-lg mb-4">Order Summary</h2>
-            
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Subtotal ({{ cart|length }} items)</span>
-                    <span>£{{ cart.total_price }}</span>
-                </div>
-                <div class="flex justify-between text-gray-500">
-                    <span>Network fee (5%)</span>
-                    <span>Calculated at checkout</span>
-                </div>
-            </div>
-            
-            <div class="border-t mt-4 pt-4">
-                <div class="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>£{{ cart.total_price }}</span>
-                </div>
-            </div>
-            
-            <div class="mt-6">
-                <a href="{% url 'core:checkout' %}" class="w-full btn btn-primary block text-center py-3 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700">
-                    Proceed to Checkout
-                </a>
-                <a href="{% url 'core:home' %}" class="block text-center mt-3 text-gray-600 hover:text-gray-800">
-                    Continue Shopping
-                </a>
-            </div>
+<div class="card">
+    <h1 style="margin-top: 0;">Your Basket</h1>
+    <p class="lead">Review your items before checkout.</p>
+</div>
+
+{% if cart and items_by_producer %}
+    <!-- Multi-vendor notice -->
+    {% if is_multi_vendor %}
+        <div class="card" style="margin-top: 1rem; background: #eff6ff; border-color: #bfdbfe;">
+            <p style="margin: 0; color: #1e40af;">
+                <strong>Multi-vendor order</strong> — Your basket contains items from {{ producer_count }} different suppliers.
+                Each will prepare and deliver their items separately.
+            </p>
         </div>
     {% endif %}
-</div>
+
+    <!-- Items grouped by producer -->
+    <div class="stack" style="margin-top: 1rem;">
+        {% for producer_id, vendor in items_by_producer.items %}
+            <div class="card">
+                <h3 style="margin-top: 0;">{{ vendor.producer.business_name }}</h3>
+                <p class="lead">{{ vendor.producer.postcode }}</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                            <th class="table-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in vendor.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong>
+                                    {% if item.product.organic %}
+                                        <span class="badge badge-confirmed" style="margin-left: 0.5rem;">Organic</span>
+                                    {% endif %}
+                                </td>
+                                <td>£{{ item.price }}</td>
+                                <td>
+                                    <form action="{% url 'core:cart-update' item.product.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" 
+                                               min="1" max="{{ item.product.stock_quantity }}" 
+                                               class="quantity-input" style="width: 60px;">
+                                        <button type="submit" class="btn small">Update</button>
+                                    </form>
+                                </td>
+                                <td><strong>£{{ item.total_price }}</strong></td>
+                                <td>
+                                    <form action="{% url 'core:cart-remove' item.product.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn small danger">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
+                            <td><strong>£{{ vendor.subtotal }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Cart Total -->
+    <div class="card" style="margin-top: 1rem;">
+        <h2 style="margin-top: 0;">Order Total</h2>
+        <table>
+            <tbody>
+                <tr>
+                    <td>Items ({{ cart|length }})</td>
+                    <td style="text-align: right;"><strong>£{{ cart.total_price }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Actions -->
+    <div class="card actions space-between" style="margin-top: 1rem;">
+        <a href="{% url 'core:customer-product-list' %}" class="btn">Continue Shopping</a>
+        <a href="{% url 'core:checkout' %}" class="btn primary">Proceed to Checkout</a>
+    </div>
+
+{% else %}
+    <!-- Empty Cart -->
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">Your basket is empty.</p>
+        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
+    </div>
+{% endif %}
 {% endblock %}
