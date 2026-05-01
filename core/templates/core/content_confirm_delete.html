@@ -1,0 +1,20 @@
+{% extends "core/base.html" %}
+
+{% block title %}Delete Content{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 36rem; margin: 0 auto;">
+    <div class="stack">
+        <div>
+            <div class="eyebrow">Stories and guidance</div>
+            <h1>Delete {{ object.title }}?</h1>
+            <p>This removes the selected producer content item.</p>
+        </div>
+        <form method="post" class="actions">
+            {% csrf_token %}
+            <button type="submit" class="primary">Delete content</button>
+            <a href="{% url 'core:content-list' %}" class="btn secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

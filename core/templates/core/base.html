@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Producer Products{% endblock %}</title>
+    <title>{% block title %}Producer Workspace{% endblock %}</title>
+    {% load static %}
+    {% block extra_css %}{% endblock %}
     <style>
         body {
             font-family: sans-serif;
@@ -11,30 +13,106 @@
             background: #f7f7f7;
             color: #222;
         }
-        header {
+        a {
+            color: #1f4d3f;
+        }
+        .site-header {
             background: #1f4d3f;
             color: #fff;
             padding: 1rem 1.5rem;
         }
-        header a {
+        .site-header a {
             color: inherit;
             text-decoration: none;
         }
-        header a:hover {
+        .site-header a:hover {
             text-decoration: underline;
         }
-        main {
-            max-width: 900px;
-            margin: 1.5rem auto;
-            padding: 0 1rem;
+        .site-header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            justify-content: space-between;
         }
-        .card {
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+        .brand strong {
+            font-size: 1rem;
+        }
+        .brand span {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .top-nav {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .top-nav form {
+            margin: 0;
+        }
+        .site-shell {
+            max-width: 1100px;
+            margin: 1.5rem auto;
+            padding: 0 1rem 2rem;
+        }
+        .card,
+        .hero-card,
+        .stat-card {
             background: #fff;
             border: 1px solid #e5e5e5;
             border-radius: 8px;
             padding: 1rem;
+            box-shadow: none;
         }
-        .btn {
+        .grid {
+            display: grid;
+            gap: 1rem;
+        }
+        .grid.two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .grid.three {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .page-intro {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        .page-intro h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .page-intro p {
+            margin: 0.5rem 0 0;
+        }
+        .eyebrow {
+            color: #1f4d3f;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.35rem;
+        }
+        .stat-value {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0.35rem 0;
+        }
+        .btn,
+        button,
+        input[type="submit"] {
             display: inline-block;
             text-decoration: none;
             border: 1px solid #1f4d3f;
@@ -43,15 +121,61 @@
             border-radius: 6px;
             background: #fff;
             cursor: pointer;
+            font: inherit;
         }
-        .btn.primary {
+        .btn.primary,
+        button.primary,
+        a.primary {
             background: #1f4d3f;
             color: #fff;
         }
-        .actions {
+        .btn.secondary,
+        .btn.danger {
+            background: #fff;
+        }
+        .actions,
+        .chip-row {
             display: flex;
             gap: 0.5rem;
             align-items: center;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            background: #eef5f1;
+            border: 1px solid #cfe1d9;
+            color: #1f4d3f;
+            border-radius: 999px;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.8rem;
+        }
+        .badge.warn,
+        .badge.alert {
+            background: #fff4e5;
+            border-color: #ffd8a8;
+            color: #8a5a12;
+        }
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .meta,
+        p {
+            color: #555;
+        }
+        .list-reset {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .list-item {
+            padding: 1rem 0;
+            border-top: 1px solid #eee;
+        }
+        .list-item:first-child {
+            border-top: 0;
+            padding-top: 0;
         }
         table {
             width: 100%;
@@ -63,9 +187,46 @@
             padding: 0.6rem 0.4rem;
             vertical-align: top;
         }
+        .table-wrap {
+            overflow-x: auto;
+        }
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .filters > * {
+            flex: 1 1 12rem;
+        }
+        form p,
+        .form-grid {
+            display: grid;
+            gap: 0.25rem;
+        }
+        .form-grid.two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        input, select, textarea {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font: inherit;
+            width: 100%;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .checkbox-row input {
+            width: auto;
+        }
         .errorlist {
             color: #b00020;
             margin: 0.4rem 0;
+            padding-left: 1rem;
         }
         .messages {
             list-style: none;
@@ -78,31 +239,262 @@
             border-radius: 6px;
             padding: 0.6rem 0.8rem;
         }
-        form p {
+        .section-title {
             display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
-        input, select, textarea {
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+        .section-title h2 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        .section-title p {
+            margin: 0.25rem 0 0;
+        }
+        @media (max-width: 900px) {
+            .site-header-inner,
+            .page-intro,
+            .grid.two,
+            .grid.three,
+            .form-grid.two {
+                display: block;
+            }
+            .top-nav {
+                margin-top: 0.75rem;
+                justify-content: flex-start;
+            }
+            .grid.two > *,
+            .grid.three > * {
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Desktop improvements (>900px) */
+        @media (min-width: 901px) {
+            /* 1. Page max-width and centered content */
+            .site-shell {
+                max-width: 1200px;
+                padding: 2rem 2rem 3rem;
+            }
+            .site-header-inner {
+                max-width: 1200px;
+            }
+
+            /* Typography improvements */
+            body {
+                line-height: 1.6;
+            }
+            .page-intro h1 {
+                font-size: 2rem;
+                line-height: 1.25;
+            }
+            .section-title h2 {
+                font-size: 1.3rem;
+            }
+            p, .meta {
+                font-size: 0.95rem;
+                line-height: 1.55;
+            }
+
+            /* 2. Table row hover and improved padding */
+            tbody tr:hover {
+                background: #fafbfa;
+            }
+            th, td {
+                padding: 0.75rem 0.6rem;
+            }
+            th {
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+                color: #555;
+            }
+
+            /* 3. Card padding and header spacing */
+            .card,
+            .hero-card,
+            .stat-card {
+                padding: 1.25rem 1.5rem;
+            }
+            .section-title {
+                margin-bottom: 1.25rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid #eee;
+            }
+
+            /* 4. Primary button sizing and hover elevation */
+            .btn,
+            button,
+            input[type="submit"] {
+                padding: 0.5rem 1rem;
+                transition: box-shadow 0.15s ease, transform 0.15s ease;
+            }
+            .btn:hover,
+            button:hover,
+            input[type="submit"]:hover {
+                box-shadow: 0 2px 6px rgba(31, 77, 63, 0.15);
+                transform: translateY(-1px);
+            }
+            .btn.primary,
+            button.primary,
+            a.primary {
+                padding: 0.55rem 1.15rem;
+                font-weight: 500;
+            }
+            .btn.primary:hover,
+            button.primary:hover,
+            a.primary:hover {
+                box-shadow: 0 3px 10px rgba(31, 77, 63, 0.22);
+            }
+
+            /* 5. Form label spacing and input alignment */
+            form p,
+            .form-grid {
+                gap: 0.5rem;
+            }
+            form p label,
+            .form-grid label {
+                font-weight: 500;
+                margin-bottom: 0.15rem;
+            }
+            input, select, textarea {
+                padding: 0.6rem 0.75rem;
+            }
+            input[type="date"],
+            input[type="time"],
+            input[type="datetime-local"] {
+                min-width: 180px;
+                max-width: 260px;
+            }
+            .form-grid.two {
+                gap: 1.25rem 1.5rem;
+            }
+
+            /* Filters row polish */
+            .filters {
+                gap: 1rem;
+                align-items: flex-end;
+            }
+
+            /* ===== Product form improvements ===== */
+
+            /* Form section grouping with fieldsets */
+            .product-form .form-section {
+                border: none;
+                padding: 0;
+                margin: 0 0 1.75rem;
+                padding-bottom: 1.5rem;
+                border-bottom: 1px solid #eee;
+            }
+            .product-form .form-section:last-of-type {
+                border-bottom: none;
+                margin-bottom: 0.5rem;
+                padding-bottom: 0;
+                margin-left: 50px;
+            }
+
+            /* Section headings */
+            .form-section-heading {
+                font-size: 0.8rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                color: #1f4d3f;
+                margin-bottom: 1rem;
+                padding: 0;
+            }
+
+            /* Lighter weight, consistent labels */
+            .product-form label {
+                font-weight: 400;
+                color: #444;
+                font-size: 0.9rem;
+            }
+
+            /* Vertical rhythm between form rows within sections */
+            .product-form .form-grid {
+                margin-bottom: 1rem;
+            }
+            .product-form .form-grid:last-child {
+                margin-bottom: 0;
+            }
+            .product-form .stack > p {
+                margin-bottom: 1rem;
+            }
+
+            /* Larger textareas on desktop */
+            .product-form textarea {
+                min-height: 100px;
+                resize: vertical;
+            }
+
+            /* Reasonable widths for date and number inputs */
+            .product-form input[type="number"] {
+                max-width: 160px;
+            }
+            .product-form input[type="date"],
+            .product-form input[type="datetime-local"] {
+                max-width: 200px;
+            }
+
+            /* Action area: grouped buttons with primary emphasis */
+            .form-actions {
+                margin-top: 1.5rem;
+                padding-top: 1.25rem;
+                border-top: 1px solid #eee;
+                gap: 0.75rem;
+            }
+            .form-actions .btn.secondary {
+                color: #666;
+                border-color: #ccc;
+            }
+            .form-actions .btn.secondary:hover {
+                color: #1f4d3f;
+                border-color: #1f4d3f;
+            }
         }
     </style>
 </head>
 <body>
-<header>
-    <strong><a href="{% url 'core:home' %}">Producer Dashboard</a></strong>
-</header>
-<main>
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    {% block content %}{% endblock %}
-</main>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="{% url 'core:home' %}" class="brand">
+                <strong>Bristol Food Network</strong>
+                <span>Producer Dashboard</span>
+            </a>
+            <nav class="top-nav">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'core:dashboard' %}">Dashboard</a>
+                    <a href="{% url 'core:product-list' %}">Products</a>
+                    <a href="{% url 'core:order-list' %}">Orders</a>
+                    <a href="{% url 'core:settlement-list' %}">Settlements</a>
+                    <a href="{% url 'core:surplus-list' %}">Surplus</a>
+                    <a href="{% url 'core:content-list' %}">Stories & Guides</a>
+                    <a href="{% url 'core:producer-profile' %}">Profile</a>
+                    <form method="post" action="{% url 'core:producer-logout' %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit">Log out</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'core:producer-login' %}">Producer login</a>
+                    <a href="{% url 'core:producer-register' %}" class="primary">Create producer account</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <div class="site-shell">
+        <main>
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 </body>
 </html>

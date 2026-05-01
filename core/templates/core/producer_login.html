@@ -1,33 +1,49 @@
 {% extends "core/base.html" %}
+{% load static %}
 
 {% block title %}Producer Login{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/producer-form.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 520px; margin: 0 auto;">
-    <h1 style="margin-top: 0;">Producer Login</h1>
-    <p>Sign in to manage your products.</p>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Producer access</div>
+        <h1>Sign in to your workspace</h1>
+        <p>Review incoming orders, keep seasonal stock current, and follow weekly settlement records.</p>
+    </div>
+</div>
 
-    <form method="post">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-            {{ form.non_field_errors }}
-        {% endif %}
-
-        <p>
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {{ form.email.errors }}
-        </p>
-        <p>
-            {{ form.password.label_tag }}
-            {{ form.password }}
-            {{ form.password.errors }}
-        </p>
-        <div class="actions" style="margin-top: 1rem;">
-            <button type="submit" class="btn primary">Sign In</button>
-            <a class="btn" href="{% url 'core:producer-register' %}">Register</a>
-        </div>
-    </form>
+<div class="minimal-form-wrap">
+    <div class="minimal-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <div class="form-field{% if form.email.errors %} has-error{% endif %}">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            
+            <div class="form-field{% if form.password.errors %} has-error{% endif %}">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Sign in</button>
+                <a class="btn-secondary" href="{% url 'core:producer-register' %}">Create account</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

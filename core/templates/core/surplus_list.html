@@ -1,0 +1,55 @@
+{% extends "core/base.html" %}
+
+{% block title %}Surplus Listings{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Surplus produce</div>
+        <h1>Last-minute discount listings</h1>
+        <p>Use surplus listings to move extra stock quickly and reduce waste inside the local food network.</p>
+    </div>
+    <div class="actions"><a href="{% url 'core:surplus-create' %}" class="btn primary">Add surplus listing</a></div>
+</div>
+
+<div class="card">
+    {% if surplus_listings %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Pricing</th>
+                        <th>Ends</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for listing in surplus_listings %}
+                        <tr>
+                            <td>
+                                <strong>{{ listing.product.name }}</strong>
+                                {% if listing.note %}<p class="meta" style="margin: 0.35rem 0 0;">{{ listing.note }}</p>{% endif %}
+                            </td>
+                            <td>{{ listing.quantity }}</td>
+                            <td>{{ listing.original_price }} to {{ listing.discounted_price }}<p class="meta" style="margin: 0.35rem 0 0;">{{ listing.discount_percent }}% discount</p></td>
+                            <td>{{ listing.available_until|date:"d M Y H:i" }}</td>
+                            <td><span class="badge{% if listing.is_active %}{% else %} warn{% endif %}">{% if listing.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                            <td>
+                                <div class="actions">
+                                    <a href="{% url 'core:surplus-update' listing.pk %}" class="btn">Edit</a>
+                                    <a href="{% url 'core:surplus-delete' listing.pk %}" class="btn danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="empty-state">No surplus listings yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

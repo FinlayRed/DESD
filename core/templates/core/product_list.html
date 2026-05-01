@@ -1,44 +1,86 @@
 {% extends "core/base.html" %}
 
-{% block title %}My Products{% endblock %}
+{% block title %}Products{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="actions" style="justify-content: space-between; margin-bottom: 1rem;">
-        <h1 style="margin: 0; font-size: 1.4rem;">My Products</h1>
-        <a href="{% url 'core:product-create' %}" class="btn primary">Add Product</a>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Products</div>
+        <h1>Seasonal inventory</h1>
+        <p>Manage harvest dates, best-before windows, origin details, allergen warnings, stock levels, etc.</p>
     </div>
+    <div class="actions">
+        <a href="{% url 'core:product-create' %}" class="btn primary">Add product</a>
+    </div>
+</div>
+
+<section class="grid three" style="margin-bottom: 1rem;">
+    <article class="stat-card"><span class="eyebrow">Active</span><span class="stat-value">{{ active_count }}</span><p>Listings customers can order</p></article>
+    <article class="stat-card"><span class="eyebrow">Inactive</span><span class="stat-value">{{ inactive_count }}</span><p>Paused or archived items</p></article>
+    <article class="stat-card"><span class="eyebrow">Low stock</span><span class="stat-value">{{ low_stock_count }}</span><p>Products needing attention</p></article>
+</section>
+
+<div class="card">
+    <form method="get" class="filters">
+        <input type="search" name="q" value="{{ search_query }}" placeholder="Search products">
+        <select name="visibility">
+            <option value="">All products</option>
+            <option value="active" {% if visibility == 'active' %}selected{% endif %}>Active only</option>
+            <option value="inactive" {% if visibility == 'inactive' %}selected{% endif %}>Inactive only</option>
+            <option value="low-stock" {% if visibility == 'low-stock' %}selected{% endif %}>Low stock</option>
+        </select>
+        <button type="submit" class="primary">Filter</button>
+    </form>
 
     {% if products %}
-        <table>
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for product in products %}
-                <tr>
-                    <td>{{ product.name }}</td>
-                    <td>{{ product.category }}</td>
-                    <td>{{ product.price }}</td>
-                    <td>{% if product.is_active %}Active{% else %}Inactive{% endif %}</td>
-                    <td>
-                        <div class="actions">
-                            <a href="{% url 'core:product-update' product.pk %}" class="btn">Edit</a>
-                            <a href="{% url 'core:product-delete' product.pk %}" class="btn">Delete</a>
-                        </div>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Availability</th>
+                        <th>Traceability</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                <p class="meta" style="margin: 0.35rem 0 0;">{{ product.price }}{% if product.seasonal_highlight %} · {{ product.seasonal_highlight }}{% endif %}</p>
+                            </td>
+                            <td>{{ product.category|default:"-" }}</td>
+                            <td>
+                                <div>{{ product.available_window }}</div>
+                                <p class="meta" style="margin: 0.35rem 0 0;">Lead time {{ product.lead_time_hours }}h</p>
+                            </td>
+                            <td>
+                                <div>{{ product.display_origin }}</div>
+                                <p class="meta" style="margin: 0.35rem 0 0;">
+                                    {% if product.organic %}Organic{% else %}Conventional{% endif %}
+                                    {% if product.best_before_date %} · Best before {{ product.best_before_date }}{% endif %}
+                                </p>
+                            </td>
+                            <td>
+                                <span class="badge{% if product.is_low_stock %} warn{% endif %}">{{ product.stock_quantity }} in stock</span>
+                                <p class="meta" style="margin: 0.35rem 0 0;">{% if product.is_active %}Active{% else %}Inactive{% endif %}</p>
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <a href="{% url 'core:product-update' product.pk %}" class="btn">Edit</a>
+                                    <a href="{% url 'core:product-delete' product.pk %}" class="btn danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>No products yet.</p>
+        <p class="empty-state">No products match this filter yet.</p>
     {% endif %}
 </div>
 {% endblock %}

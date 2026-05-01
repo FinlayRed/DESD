@@ -1,18 +1,41 @@
 {% extends "core/base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Producer Workspace{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">Project Links</h1>
-    <p>Quick links to the main pages built so far.</p>
-    <ul>
-        <li><a href="{% url 'core:producer-login' %}">Producer Login</a></li>
-        <li><a href="{% url 'core:producer-register' %}">Producer Register</a></li>
-        <li><a href="{% url 'core:product-list' %}">Producer Product List</a></li>
-        <li><a href="{% url 'core:product-create' %}">Create Product</a></li>
-        <li><a href="/admin/">Admin</a></li>
-        <li><a href="/admin/login/">Admin Login</a></li>
-    </ul>
-</div>
+<section class="hero-card">
+    <div class="page-intro" style="margin-bottom: 0;">
+        <div>
+            <div class="eyebrow">Producer features</div>
+            <h1>Manage local produce without managing chaos.</h1>
+            <p>The producer workspace covers seasonal product updates, incoming orders, weekly settlements, traceability, surplus discounts, and farm stories for the Bristol Regional Food Network.</p>
+        </div>
+        <div class="actions">
+            {% if user.is_authenticated %}
+                <a href="{% url 'core:dashboard' %}" class="btn primary">Open dashboard</a>
+            {% else %}
+                <a href="{% url 'core:producer-register' %}" class="btn primary">Register as producer</a>
+                <a href="{% url 'core:producer-login' %}" class="btn secondary">Producer login</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="grid three" style="margin-top: 1rem;">
+    <article class="card">
+        <div class="eyebrow">Products</div>
+        <h2 style="margin-top: 0.4rem;">Seasonal inventory</h2>
+        <p>Track stock, harvest dates, best-before windows, allergen information, storage notes, and farm origin in one producer-friendly form.</p>
+    </article>
+    <article class="card">
+        <div class="eyebrow">Orders</div>
+        <h2 style="margin-top: 0.4rem;">48-hour visibility</h2>
+        <p>Review producer-specific order items, collection or delivery details, postcode distance estimates, and lead-time warnings before fulfilment.</p>
+    </article>
+    <article class="card">
+        <div class="eyebrow">Community</div>
+        <h2 style="margin-top: 0.4rem;">Stories and surplus</h2>
+        <p>Publish discounted surplus produce, seasonal recipes, storage guidance, and farm stories to strengthen local food connections.</p>
+    </article>
+</section>
 {% endblock %}

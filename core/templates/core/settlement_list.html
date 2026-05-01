@@ -1,0 +1,46 @@
+{% extends "core/base.html" %}
+
+{% block title %}Settlements{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Settlements</div>
+        <h1>Weekly payment records</h1>
+        <p>Paid orders are grouped into weekly settlements with the network's five percent comission seperated from your net amount.</p>
+    </div>
+</div>
+
+<div class="card">
+    {% if settlements %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>Status</th>
+                        <th>Gross</th>
+                        <th>Commission</th>
+                        <th>Net</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for settlement in settlements %}
+                        <tr>
+                            <td>{{ settlement.week_start }} to {{ settlement.week_end }}</td>
+                            <td><span class="badge">{{ settlement.get_status_display }}</span></td>
+                            <td>{{ settlement.gross_amount }}</td>
+                            <td>{{ settlement.commission_amount }}</td>
+                            <td>{{ settlement.net_amount }}</td>
+                            <td><a href="{% url 'core:settlement-detail' settlement.pk %}" class="btn">View audit trail</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="empty-state">No settlements available yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
