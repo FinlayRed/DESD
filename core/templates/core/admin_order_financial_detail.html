@@ -1,0 +1,110 @@
+{% extends "core/base.html" %}
+
+{% block title %}Order {{ order.reference }} Financial Detail – BRFN Admin{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <h1>Order {{ order.reference|default:"—" }}</h1>
+        <p>Financial breakdown with per-producer commission split.</p>
+    </div>
+    <a href="{% url 'admin_reports:commission-report' %}" class="btn">Back to Report</a>
+</div>
+
+<!-- Order header info -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="grid two">
+        <div>
+            <div class="eyebrow">Customer</div>
+            <p style="margin: 0.25rem 0;"><strong>{{ order.customer_display_name }}</strong></p>
+            {% if order.customer_email %}<p style="margin: 0;">{{ order.customer_email }}</p>{% endif %}
+            {% if order.delivery_postcode %}<p style="margin: 0;">Delivery postcode: {{ order.delivery_postcode }}</p>{% endif %}
+        </div>
+        <div>
+            <div class="eyebrow">Order Details</div>
+            <p style="margin: 0.25rem 0;">Status: <span class="badge">{{ order.get_status_display }}</span></p>
+            <p style="margin: 0;">Placed: {{ order.created_at|date:"d M Y H:i" }}</p>
+            {% if order.fulfilment_date %}<p style="margin: 0;">Fulfilment: {{ order.fulfilment_date|date:"d M Y" }}</p>{% endif %}
+            <p style="margin: 0;">Paid: {% if order.paid %}Yes{% else %}No{% endif %}</p>
+        </div>
+    </div>
+</div>
+
+{% if payment %}
+<!-- Payment summary -->
+<div class="grid three" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <div class="eyebrow">Order Total</div>
+        <span class="stat-value">£{{ payment.total_amount|floatformat:2 }}</span>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Network Commission (5%)</div>
+        <span class="stat-value">£{{ payment.network_commission|floatformat:2 }}</span>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Producer Share (95%)</div>
+        <span class="stat-value">£{{ payment.producer_amount|floatformat:2 }}</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Per-producer breakdown -->
+{% for data in producer_breakdown %}
+<div class="card" style="margin-bottom: 1rem;">
+    <div class="section-title">
+        <div>
+            <h2>{{ data.producer.business_name }}</h2>
+            <p>Postcode: {{ data.producer.postcode }}</p>
+        </div>
+        <div style="text-align: right;">
+            <div class="eyebrow">Producer subtotal</div>
+            <strong>£{{ data.gross|floatformat:2 }}</strong>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th style="text-align: right;">Qty</th>
+                    <th style="text-align: right;">Unit Price (£)</th>
+                    <th style="text-align: right;">Line Total (£)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in data.items %}
+                <tr>
+                    <td>{{ entry.item.product.name }}</td>
+                    <td style="text-align: right;">{{ entry.item.quantity }}</td>
+                    <td style="text-align: right;">{{ entry.item.price|floatformat:2 }}</td>
+                    <td style="text-align: right;">{{ entry.line_total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right;"><strong>Subtotal</strong></td>
+                    <td style="text-align: right;"><strong>£{{ data.gross|floatformat:2 }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right;">Commission (5%)</td>
+                    <td style="text-align: right;">– £{{ data.commission|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right;"><strong>Producer payment</strong></td>
+                    <td style="text-align: right;"><strong>£{{ data.net|floatformat:2 }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+{% if order.notes %}
+<div class="card">
+    <div class="eyebrow">Order Notes</div>
+    <p>{{ order.notes }}</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -322,3 +322,65 @@ class ProducerContent(models.Model):
     def clean(self):
         if self.product_id and self.producer_id and self.product.producer_id != self.producer_id:
             raise ValidationError({"product": "You can only link content to your own products."})
+
+class TraceabilityRecord(models.Model):
+    """
+    Point-in-time snapshot created when an order is paid.
+
+    Stores a frozen copy of product, producer, and customer
+    information so the audit trail survives future edits.
+    Covers TC-013 (food miles), TC-015 (allergens), and
+    general traceability / food-safety requirements.
+    """
+
+    order_item = models.OneToOneField(
+        OrderItem,
+        on_delete=models.CASCADE,
+        related_name="traceability_record",
+    )
+    order_reference = models.CharField(max_length=20)
+    producer = models.ForeignKey(
+        Producer,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="traceability_records",
+    )
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="traceability_records",
+    )
+
+    # ---- snapshots (frozen at time of purchase) ----
+    product_name_snapshot = models.CharField(max_length=120)
+    product_category_snapshot = models.CharField(max_length=50, blank=True)
+    producer_name_snapshot = models.CharField(max_length=100)
+    producer_postcode_snapshot = models.CharField(max_length=10)
+    customer_postcode_snapshot = models.CharField(max_length=10, blank=True)
+
+    # ---- food safety & quality ----
+    food_miles = models.DecimalField(
+        max_digits=6, decimal_places=1, default=0
+    )
+    allergen_info_snapshot = models.TextField(blank=True)
+    organic_certified = models.BooleanField(default=False)
+    harvest_date = models.DateField(blank=True, null=True)
+    best_before_date = models.DateField(blank=True, null=True)
+
+    # ---- financial snapshot ----
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    line_total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return (
+            f"{self.product_name_snapshot} – "
+            f"{self.producer_name_snapshot} → "
+            f"{self.order_reference}"
+        )

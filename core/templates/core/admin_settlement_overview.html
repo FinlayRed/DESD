@@ -1,0 +1,104 @@
+{% extends "core/base.html" %}
+
+{% block title %}Settlement Overview – BRFN Admin{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <h1>Settlement Overview</h1>
+        <p>Weekly producer payment settlements and status tracking.</p>
+    </div>
+    <a href="{% url 'admin_reports:financial-dashboard' %}" class="btn">Back to Dashboard</a>
+</div>
+
+<!-- Status filter -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <form method="get" class="filters">
+        <div>
+            <label for="status">Filter by status</label>
+            <select id="status" name="status">
+                <option value="">All statuses</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="align-self: flex-end;">
+            <button type="submit" class="btn primary">Filter</button>
+            {% if status_filter %}
+                <a href="{% url 'admin_reports:settlement-overview' %}" class="btn secondary">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Totals -->
+<div class="grid three" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <div class="eyebrow">Total Gross</div>
+        <span class="stat-value">£{{ total_gross|floatformat:2 }}</span>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Total Commission</div>
+        <span class="stat-value">£{{ total_commission|floatformat:2 }}</span>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Total Net (Producer)</div>
+        <span class="stat-value">£{{ total_net|floatformat:2 }}</span>
+    </div>
+</div>
+
+<!-- Settlements table -->
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Producer</th>
+                    <th>Week</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Gross (£)</th>
+                    <th style="text-align: right;">Commission (£)</th>
+                    <th style="text-align: right;">Net (£)</th>
+                    <th>Payout Ref</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for settlement in settlements %}
+                <tr>
+                    <td><strong>{{ settlement.producer.business_name }}</strong></td>
+                    <td>{{ settlement.week_start|date:"d M" }} – {{ settlement.week_end|date:"d M Y" }}</td>
+                    <td>
+                        {% if settlement.status == "paid" %}
+                            <span class="badge">Paid</span>
+                        {% else %}
+                            <span class="badge warn">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">{{ settlement.gross_amount|floatformat:2 }}</td>
+                    <td style="text-align: right;">{{ settlement.commission_amount|floatformat:2 }}</td>
+                    <td style="text-align: right;">{{ settlement.net_amount|floatformat:2 }}</td>
+                    <td>{{ settlement.payout_reference|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">No settlements found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="actions" style="margin-top: 1rem; justify-content: center;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn">Previous</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

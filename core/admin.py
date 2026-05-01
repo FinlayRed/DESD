@@ -11,6 +11,7 @@ from .models import (
     Product,
     SettlementEntry,
     SurplusListing,
+    TraceabilityRecord,    
 )
 
 
@@ -88,3 +89,44 @@ class ProducerContentAdmin(admin.ModelAdmin):
     list_display = ("title", "content_type", "producer", "product", "season", "is_published", "updated_at")
     list_filter = ("content_type", "is_published")
     search_fields = ("title", "summary", "body", "producer__business_name")
+
+@admin.register(TraceabilityRecord)
+class TraceabilityRecordAdmin(admin.ModelAdmin):
+    list_display = (
+        "order_reference",
+        "product_name_snapshot",
+        "producer_name_snapshot",
+        "food_miles",
+        "allergen_info_snapshot",
+        "organic_certified",
+        "quantity",
+        "line_total",
+        "created_at",
+    )
+    list_filter = ("organic_certified", "created_at")
+    search_fields = (
+        "order_reference",
+        "product_name_snapshot",
+        "producer_name_snapshot",
+        "allergen_info_snapshot",
+    )
+    readonly_fields = (
+        "order_item",
+        "order_reference",
+        "producer",
+        "customer",
+        "product_name_snapshot",
+        "product_category_snapshot",
+        "producer_name_snapshot",
+        "producer_postcode_snapshot",
+        "customer_postcode_snapshot",
+        "food_miles",
+        "allergen_info_snapshot",
+        "organic_certified",
+        "harvest_date",
+        "best_before_date",
+        "quantity",
+        "unit_price",
+        "line_total",
+        "created_at",
+    )
