@@ -2,6 +2,10 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 
 from .views import (
+    CustomerCheckoutView,
+    CustomerLoginView,
+    CustomerProductBrowseView,
+    CustomerRegisterView,
     HomeView,
     ProducerContentCreateView,
     ProducerContentDeleteView,
@@ -24,12 +28,19 @@ from .views import (
     ProductDeleteView,
     ProductListView,
     ProductUpdateView,
+    user_logout_view,
 )
 
 app_name = "core"
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("customer/products/", CustomerProductBrowseView.as_view(), name="customer-product-list"),
+    path("customer/checkout/", CustomerCheckoutView.as_view(), name="customer-checkout"),
+    path("customer/login/", CustomerLoginView.as_view(), name="customer-login"),
+    path("customer/register/", CustomerRegisterView.as_view(), name="customer-register"),
+    path("customer/logout/", user_logout_view, name="customer-logout"),
+    path("admin-reports/", include("core.admin_urls")),
     path("producer/dashboard/", ProducerDashboardView.as_view(), name="dashboard"),
     path("producer/login/", ProducerLoginView.as_view(), name="producer-login"),
     path("producer/logout/", LogoutView.as_view(next_page="core:home"), name="producer-logout"),

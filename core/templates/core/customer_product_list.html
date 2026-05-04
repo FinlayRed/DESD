@@ -1,0 +1,99 @@
+{% extends "core/base.html" %}
+
+{% block title %}Browse Local Produce{% endblock %}
+
+{% block content %}
+<div class="card stack">
+    <div>
+        <h1 style="margin-top: 0;">Browse Local Produce</h1>
+        <p class="lead">
+            Explore products by category, search quickly, and select items for checkout.
+        </p>
+    </div>
+
+    <form method="get" class="actions">
+        <input
+            type="text"
+            name="q"
+            placeholder="Search products, farms, or categories"
+            value="{{ query }}"
+            style="min-width: 280px;"
+        >
+        <select name="category">
+            <option value="">All categories</option>
+            {% for category_name in category_keys %}
+                <option value="{{ category_name }}" {% if active_category == category_name %}selected{% endif %}>
+                    {{ category_name|title }}
+                </option>
+            {% endfor %}
+        </select>
+        <button class="btn primary" type="submit">Search</button>
+        <a class="btn" href="{% url 'core:customer-product-list' %}">Clear</a>
+    </form>
+</div>
+
+<form method="get" action="{% url 'core:customer-checkout' %}" class="stack" style="margin-top: 1rem;">
+    {% for category_name, products_in_category in grouped_products.items %}
+        <div class="card">
+            <div class="actions space-between">
+                <h2 style="margin: 0;">{{ category_name|title }}</h2>
+                <span class="lead">{{ products_in_category|length }} item{{ products_in_category|pluralize }}</span>
+            </div>
+
+            {% if products_in_category %}
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>Product</th>
+                        <th>Farm Origin</th>
+                        <th>Harvest / Availability</th>
+                        <th>Season Status</th>
+                        <th>Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for product in products_in_category %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="items" value="{{ product.id }}">
+                            </td>
+                            <td>
+                                <strong>{{ product.name }}</strong><br>
+                                <span class="lead">{{ product.description|truncatechars:90 }}</span>
+                            </td>
+                            <td>
+                                {{ product.producer.business_name }}<br>
+                                <span class="lead">{{ product.producer.postcode }}</span>
+                            </td>
+                            <td>
+                                {% if product.available_from %}
+                                    {{ product.available_from }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                                to
+                                {% if product.available_to %}
+                                    {{ product.available_to }}
+                                {% else %}
+                                    ongoing
+                                {% endif %}
+                            </td>
+                            <td>{{ product.seasonal_status }}</td>
+                            <td>£{{ product.price }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="lead">No products currently listed in this category.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <div class="card actions space-between">
+        <span class="lead">Select one or more items to continue.</span>
+        <button class="btn primary" type="submit">Checkout</button>
+    </div>
+</form>
+{% endblock %}

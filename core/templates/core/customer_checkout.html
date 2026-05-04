@@ -1,0 +1,77 @@
+{% extends "core/base.html" %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">Checkout</h1>
+    <p class="lead">Review your basket and confirm your delivery or collection details.</p>
+</div>
+
+{% if selected_products %}
+    <div class="card" style="margin-top: 1rem;">
+        <h2 style="margin-top: 0;">Order Type</h2>
+        {% if is_multi_vendor %}
+            <p><strong>Multi-vendor order</strong> - your basket includes products from multiple suppliers.</p>
+            <p class="lead">Each supplier will manager their own delivery or collection.</p>
+        {% else %}
+            <p><strong>Single-vendor order</strong> - all items are from one supplier.</p>
+            <p class="lead">Delivery or collection will be co-ordinated directly with the producer.</p>
+        {% endif %}
+    </div>
+
+    <div class="stack" style="margin-top: 1rem;">
+        {% for vendor in vendor_groups %}
+            <div class="card">
+                <h3 style="margin-top: 0;">Supplier: {{ vendor.producer.business_name }}</h3>
+                <p class="lead">Farm postcode: {{ vendor.producer.postcode }}</p>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Season Window</th>
+                        <th>Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in vendor.items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.category|default:"Uncategorised" }}</td>
+                            <td>
+                                {% if item.available_from %}{{ item.available_from }}{% else %}N/A{% endif %}
+                                -
+                                {% if item.available_to %}{{ item.available_to }}{% else %}ongoing{% endif %}
+                            </td>
+                            <td>£{{ item.price }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="card" style="margin-top: 0.85rem; background: #fbfcfd;">
+                    <h4 style="margin-top: 0;">Supplier responsibilities</h4>
+                    <p class="lead">
+                        This producer will confirm availability, packaging, and delivery or collection details for your items.
+                    </p>
+                    <p class="lead">
+                        Please arrange a delivery or collection time directly with the producer.
+                    </p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="card actions space-between" style="margin-top: 1rem;">
+        <a href="{% url 'core:customer-product-list' %}" class="btn">Back to browsing</a>
+        <button type="button" class="btn primary">Payment</button>
+    </div>
+{% else %}
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">You currently have no products in your basket.</p>
+        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
+    </div>
+{% endif %}
+{% endblock %}
