@@ -1,0 +1,55 @@
+{% extends "core/base.html" %}
+
+{% block title %}Stories and Guides{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Stories and guidance</div>
+        <h1>Recipes, storage advice, and farm stories</h1>
+        <p>Publish educational updates that help customers understand the produce, seasonality, and the people behind each listing.</p>
+    </div>
+    <div class="actions"><a href="{% url 'core:content-create' %}" class="btn primary">Add content</a></div>
+</div>
+
+<div class="card">
+    {% if content_items %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Season</th>
+                        <th>Product</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in content_items %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.title }}</strong>
+                                {% if item.summary %}<p class="meta" style="margin: 0.35rem 0 0;">{{ item.summary }}</p>{% endif %}
+                            </td>
+                            <td>{{ item.get_content_type_display }}</td>
+                            <td>{{ item.season|default:"-" }}</td>
+                            <td>{{ item.product|default:"-" }}</td>
+                            <td><span class="badge{% if item.is_published %}{% else %} warn{% endif %}">{% if item.is_published %}Published{% else %}Draft{% endif %}</span></td>
+                            <td>
+                                <div class="actions">
+                                    <a href="{% url 'core:content-update' item.pk %}" class="btn">Edit</a>
+                                    <a href="{% url 'core:content-delete' item.pk %}" class="btn danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="empty-state">No producer content yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

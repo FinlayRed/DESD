@@ -1,18 +1,200 @@
 {% extends "core/base.html" %}
+{% load static %}
 
-{% block title %}{% if object %}Edit Product{% else %}Create Product{% endif %}{% endblock %}
+{% block title %}{% if object %}Edit Product{% else %}Add Product{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/producer-form.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">{% if object %}Edit Product{% else %}Create Product{% endif %}</h1>
-
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <div class="actions" style="margin-top: 1rem;">
-            <button type="submit" class="btn primary">Save</button>
-            <a href="{% url 'core:product-list' %}" class="btn">Cancel</a>
-        </div>
-    </form>
+<div class="minimal-form-wrap">
+    <div class="minimal-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <header class="minimal-form-header">
+                <h1>{% if object %}Update product listing{% else %}Create a product listing{% endif %}</h1>
+                <p>Capture the details producers need for seasonal trading, traceability, and reliable fulfilment.</p>
+            </header>
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <div class="form-section">
+                <h2 class="form-section-title">Basic details</h2>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.name.errors %} has-error{% endif %}">
+                        <label for="{{ form.name.id_for_label }}">Product name <span class="required">*</span></label>
+                        {{ form.name }}
+                        <span class="field-help">A clear, descriptive name customers will see</span>
+                        {{ form.name.errors }}
+                    </div>
+                    
+                    <div class="form-field{% if form.category.errors %} has-error{% endif %}">
+                        <label for="{{ form.category.id_for_label }}">Category <span class="required">*</span></label>
+                        {{ form.category }}
+                        <span class="field-help">Helps buyers find your product</span>
+                        {{ form.category.errors }}
+                    </div>
+                </div>
+                
+                <div class="form-field{% if form.description.errors %} has-error{% endif %}">
+                    <label for="{{ form.description.id_for_label }}">Description <span class="optional">(optional)</span></label>
+                    {{ form.description }}
+                    <span class="field-help">Describe flavour, texture, suggested uses, or what makes this product special</span>
+                    {{ form.description.errors }}
+                </div>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.price.errors %} has-error{% endif %}">
+                        <label for="{{ form.price.id_for_label }}">Price <span class="required">*</span></label>
+                        <div class="input-with-prefix">
+                            <span class="input-prefix">&pound;</span>
+                            {{ form.price }}
+                        </div>
+                        <span class="field-help">Price per unit in GBP</span>
+                        {{ form.price.errors }}
+                    </div>
+                    
+                    <div class="form-field">
+                        <label>Certification</label>
+                        <label class="checkbox-field">
+                            {{ form.organic }}
+                            <span>
+                                <span class="checkbox-label">Organic certified</span>
+                                <span class="checkbox-help">Check if this product is certified organic</span>
+                            </span>
+                        </label>
+                        {{ form.organic.errors }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2 class="form-section-title">Stock &amp; fulfilment</h2>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.stock_quantity.errors %} has-error{% endif %}">
+                        <label for="{{ form.stock_quantity.id_for_label }}">Stock quantity <span class="required">*</span></label>
+                        {{ form.stock_quantity }}
+                        <span class="field-help">Units currently available</span>
+                        {{ form.stock_quantity.errors }}
+                    </div>
+                    
+                    <div class="form-field{% if form.minimum_order_quantity.errors %} has-error{% endif %}">
+                        <label for="{{ form.minimum_order_quantity.id_for_label }}">Minimum order <span class="optional">(optional)</span></label>
+                        {{ form.minimum_order_quantity }}
+                        <span class="field-help">Minimum units per order, if any</span>
+                        {{ form.minimum_order_quantity.errors }}
+                    </div>
+                </div>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.lead_time_hours.errors %} has-error{% endif %}">
+                        <label for="{{ form.lead_time_hours.id_for_label }}">Lead time (hours) <span class="optional">(optional)</span></label>
+                        {{ form.lead_time_hours }}
+                        <span class="field-help">Hours needed to prepare an order</span>
+                        {{ form.lead_time_hours.errors }}
+                    </div>
+                    
+                    <div class="form-field">
+                        <label>Listing status</label>
+                        <label class="checkbox-field">
+                            {{ form.is_active }}
+                            <span>
+                                <span class="checkbox-label">Active listing</span>
+                                <span class="checkbox-help">Uncheck to hide this product from buyers</span>
+                            </span>
+                        </label>
+                        {{ form.is_active.errors }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2 class="form-section-title">Availability &amp; freshness</h2>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.available_from.errors %} has-error{% endif %}">
+                        <label for="{{ form.available_from.id_for_label }}">Available from <span class="optional">(optional)</span></label>
+                        {{ form.available_from }}
+                        <span class="field-help">When this product becomes available</span>
+                        {{ form.available_from.errors }}
+                    </div>
+                    
+                    <div class="form-field{% if form.available_to.errors %} has-error{% endif %}">
+                        <label for="{{ form.available_to.id_for_label }}">Available until <span class="optional">(optional)</span></label>
+                        {{ form.available_to }}
+                        <span class="field-help">Last date of availability</span>
+                        {{ form.available_to.errors }}
+                    </div>
+                </div>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.harvest_date.errors %} has-error{% endif %}">
+                        <label for="{{ form.harvest_date.id_for_label }}">Harvest date <span class="optional">(optional)</span></label>
+                        {{ form.harvest_date }}
+                        <span class="field-help">When the product was harvested</span>
+                        {{ form.harvest_date.errors }}
+                    </div>
+                    
+                    <div class="form-field{% if form.best_before_date.errors %} has-error{% endif %}">
+                        <label for="{{ form.best_before_date.id_for_label }}">Best before <span class="optional">(optional)</span></label>
+                        {{ form.best_before_date }}
+                        <span class="field-help">Recommended use-by date</span>
+                        {{ form.best_before_date.errors }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2 class="form-section-title">Traceability &amp; guidance</h2>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.farm_origin.errors %} has-error{% endif %}">
+                        <label for="{{ form.farm_origin.id_for_label }}">Farm origin <span class="optional">(optional)</span></label>
+                        {{ form.farm_origin }}
+                        <span class="field-help">Name or location of the farm</span>
+                        {{ form.farm_origin.errors }}
+                    </div>
+                    
+                    <div class="form-field{% if form.seasonal_highlight.errors %} has-error{% endif %}">
+                        <label for="{{ form.seasonal_highlight.id_for_label }}">Seasonal highlight <span class="optional">(optional)</span></label>
+                        {{ form.seasonal_highlight }}
+                        <span class="field-help">e.g., "Spring favourite" or "Winter special"</span>
+                        {{ form.seasonal_highlight.errors }}
+                    </div>
+                </div>
+                
+                <div class="form-row two-col">
+                    <div class="form-field{% if form.allergen_info.errors %} has-error{% endif %}">
+                        <label for="{{ form.allergen_info.id_for_label }}">Allergen information <span class="optional">(optional)</span></label>
+                        {{ form.allergen_info }}
+                        <span class="field-help">List any allergens: nuts, dairy, gluten, etc.</span>
+                        {{ form.allergen_info.errors }}
+                    </div>
+                    
+                    <div class="form-field{% if form.storage_guidance.errors %} has-error{% endif %}">
+                        <label for="{{ form.storage_guidance.id_for_label }}">Storage guidance <span class="optional">(optional)</span></label>
+                        {{ form.storage_guidance }}
+                        <span class="field-help">How to store: refrigerate, keep cool, etc.</span>
+                        {{ form.storage_guidance.errors }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    {% if object %}Update product{% else %}Create product{% endif %}
+                </button>
+                <a href="{% url 'core:product-list' %}" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

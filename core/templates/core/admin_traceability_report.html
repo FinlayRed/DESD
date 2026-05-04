@@ -1,0 +1,135 @@
+{% extends "core/base.html" %}
+
+{% block title %}Traceability Report – BRFN Admin{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <h1>Traceability Report</h1>
+        <p>Food safety audit trail: product origin, allergens, food miles, and customer linkage.</p>
+    </div>
+    <div class="actions">
+        <a href="{% url 'admin_reports:financial-dashboard' %}" class="btn">Back to Dashboard</a>
+        <a href="{% url 'admin_reports:traceability-export' %}{% if producer_filter or date_from or date_to %}?producer={{ producer_filter }}&from={{ date_from }}&to={{ date_to }}{% endif %}" class="btn primary">Export CSV</a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <form method="get" class="filters">
+        <div>
+            <label for="producer">Producer</label>
+            <select id="producer" name="producer">
+                <option value="">All producers</option>
+                {% for p in producers %}
+                    <option value="{{ p.pk }}" {% if producer_filter == p.pk|stringformat:"d" %}selected{% endif %}>{{ p.business_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="from">From date</label>
+            <input type="date" id="from" name="from" value="{{ date_from }}">
+        </div>
+        <div>
+            <label for="to">To date</label>
+            <input type="date" id="to" name="to" value="{{ date_to }}">
+        </div>
+        <div>
+            <label for="allergen">Allergen keyword</label>
+            <input type="text" id="allergen" name="allergen" value="{{ allergen_filter }}" placeholder="e.g. nuts, gluten, dairy">
+        </div>
+        <div style="align-self: flex-end;">
+            <button type="submit" class="btn primary">Filter</button>
+            {% if producer_filter or date_from or date_to or allergen_filter %}
+                <a href="{% url 'admin_reports:traceability-report' %}" class="btn secondary">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Records table -->
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Date</th>
+                    <th>Product</th>
+                    <th>Producer</th>
+                    <th>Food Miles</th>
+                    <th>Allergens</th>
+                    <th>Organic</th>
+                    <th>Harvest</th>
+                    <th>Best Before</th>
+                    <th style="text-align: right;">Qty</th>
+                    <th style="text-align: right;">Total (£)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>
+                        <a href="{% url 'admin_reports:order-financial-detail' record.order_item.order.pk %}">
+                            {{ record.order_reference }}
+                        </a>
+                    </td>
+                    <td>{{ record.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <strong>{{ record.product_name_snapshot }}</strong>
+                        {% if record.product_category_snapshot %}
+                            <br><span class="meta" style="font-size: 0.8rem;">{{ record.product_category_snapshot }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ record.producer_name_snapshot }}
+                        <br><span class="meta" style="font-size: 0.8rem;">{{ record.producer_postcode_snapshot }}</span>
+                    </td>
+                    <td>
+                        {% if record.food_miles %}
+                            <span class="badge">{{ record.food_miles }} mi</span>
+                        {% else %}
+                            <span class="meta">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.allergen_info_snapshot %}
+                            <span class="badge warn">{{ record.allergen_info_snapshot|truncatewords:6 }}</span>
+                        {% else %}
+                            <span class="meta">None</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.organic_certified %}
+                            <span class="badge">Organic</span>
+                        {% else %}
+                            <span class="meta">No</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ record.harvest_date|date:"d M Y"|default:"—" }}</td>
+                    <td>{{ record.best_before_date|date:"d M Y"|default:"—" }}</td>
+                    <td style="text-align: right;">{{ record.quantity }}</td>
+                    <td style="text-align: right;">{{ record.line_total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11">No traceability records found. Records are created when orders are paid.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="actions" style="margin-top: 1rem; justify-content: center;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if producer_filter %}&producer={{ producer_filter }}{% endif %}{% if date_from %}&from={{ date_from }}{% endif %}{% if date_to %}&to={{ date_to }}{% endif %}{% if allergen_filter %}&allergen={{ allergen_filter }}{% endif %}" class="btn">Previous</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if producer_filter %}&producer={{ producer_filter }}{% endif %}{% if date_from %}&from={{ date_from }}{% endif %}{% if date_to %}&to={{ date_to }}{% endif %}{% if allergen_filter %}&allergen={{ allergen_filter }}{% endif %}" class="btn">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
