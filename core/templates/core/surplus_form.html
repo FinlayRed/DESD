@@ -12,7 +12,7 @@
     <div>
         <div class="eyebrow">Surplus produce</div>
         <h1>{% if object %}Update surplus listing{% else %}Create surplus listing{% endif %}</h1>
-        <p>Flag last-minute stock with a discounted price and expiry time.</p>
+        <p>Flag last minute stock with a temporarily discounted price</p>
     </div>
 </div>
 
@@ -54,8 +54,6 @@
                     {{ form.available_until.errors }}
                 </div>
             </div>
-
-            <p class="meta" style="margin: -0.5rem 0 1rem;">The original price comes from the selected product and the discounted price cannot be higher.</p>
             
             <div class="form-field{% if form.note.errors %} has-error{% endif %}">
                 <label for="{{ form.note.id_for_label }}">Note <span class="optional">(optional)</span></label>

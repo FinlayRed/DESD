@@ -7,7 +7,7 @@
     <div>
         <div class="eyebrow">Producer dashboard</div>
         <h1>{{ producer.business_name }}</h1>
-        <p>Keep produce listings accurate, respond to orders with enough lead time, monitor postcode-based food miles, and review weekly settlement totals.</p>
+        <p>Producer Dashboard</p>
     </div>
     <div class="chip-row">
         {% if producer.organic %}<span class="badge">Organic producer</span>{% endif %}
@@ -17,16 +17,16 @@
 
 <section class="grid three">
     <article class="stat-card"><span class="eyebrow">Products</span><span class="stat-value">{{ product_count }}</span><p>{{ active_product_count }} active listings</p></article>
-    <article class="stat-card"><span class="eyebrow">Orders</span><span class="stat-value">{{ incoming_order_count }}</span><p>Producer-relevant orders in the system</p></article>
-    <article class="stat-card"><span class="eyebrow">Community</span><span class="stat-value">{{ surplus_count }}</span><p>Active surplus offers and {{ content_count }} published stories or guides</p></article>
+    <article class="stat-card"><span class="eyebrow">Orders</span><span class="stat-value">{{ incoming_order_count }}</span><p>Total Orders</p></article>
+    <article class="stat-card"><span class="eyebrow">Surplus Notificaitons</span><span class="stat-value">{{ surplus_count }}</span><p>Active surplus offers</p></article>
 </section>
 
 <section class="grid two" style="margin-top: 1rem;">
     <article class="card stack">
         <div class="section-title">
             <div>
-                <h2>Incoming order items</h2>
-                <p>Producer-side responsibilities with lead-time warnings.</p>
+                <h2>Incoming orders</h2>
+                <p>Items that are yet to be furfilled</p>
             </div>
             <a href="{% url 'core:order-list' %}" class="btn secondary">View all orders</a>
         </div>
@@ -49,7 +49,7 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="empty-state">No producer order items yet.</p>
+            <p class="empty-state">No incoming orders at the moment.</p>
         {% endif %}
     </article>
 
@@ -57,7 +57,7 @@
         <div class="section-title">
             <div>
                 <h2>Weekly settlements</h2>
-                <p>Transparent totals with the network commission already calculated.</p>
+                <p>Settlements with commisions calculated</p>
             </div>
             <a href="{% url 'core:settlement-list' %}" class="btn secondary">Settlement history</a>
         </div>
@@ -76,7 +76,7 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="empty-state">No pending settlements yet. Paid order items will appear here automatically.</p>
+            <p class="empty-state">No pending settlements yet.</p>
         {% endif %}
     </article>
 </section>
@@ -86,7 +86,7 @@
         <div class="section-title">
             <div>
                 <h2>Low stock</h2>
-                <p>Spot items that may need a seasonal update.</p>
+                <p>Items running low on inventory</p>
             </div>
             <a href="{% url 'core:product-list' %}?visibility=low-stock" class="btn secondary">Review stock</a>
         </div>
@@ -108,7 +108,7 @@
         <div class="section-title">
             <div>
                 <h2>Surplus listings</h2>
-                <p>Last-minute discounts to reduce waste.</p>
+                <p>Last minute discounts to reduce waste.</p>
             </div>
             <a href="{% url 'core:surplus-list' %}" class="btn secondary">Manage surplus</a>
         </div>

@@ -7,7 +7,7 @@
     <div>
         <div class="eyebrow">Products</div>
         <h1>Seasonal inventory</h1>
-        <p>Manage harvest dates, best-before windows, origin details, allergen warnings, stock levels, and longer lead times from one page.</p>
+        <p>Manage harvest dates, best-before windows, origin details, allergen warnings, stock levels, etc.</p>
     </div>
     <div class="actions">
         <a href="{% url 'core:product-create' %}" class="btn primary">Add product</a>
@@ -22,9 +22,9 @@
 
 <div class="card">
     <form method="get" class="filters">
-        <input type="search" name="q" value="{{ search_query }}" placeholder="Search products, origin, or seasonal note">
+        <input type="search" name="q" value="{{ search_query }}" placeholder="Search products">
         <select name="visibility">
-            <option value="">All visibility states</option>
+            <option value="">All products</option>
             <option value="active" {% if visibility == 'active' %}selected{% endif %}>Active only</option>
             <option value="inactive" {% if visibility == 'inactive' %}selected{% endif %}>Inactive only</option>
             <option value="low-stock" {% if visibility == 'low-stock' %}selected{% endif %}>Low stock</option>
