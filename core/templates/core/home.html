@@ -1,96 +1,53 @@
 {% extends "core/base.html" %}
 
-{% block title %}Bristol Regional Food Network{% endblock %}
+{% block title %}Producer Workspace{% endblock %}
 
 {% block content %}
-<div class="card" style="text-align: center; padding: 2rem;">
-    <h1 style="margin-top: 0; font-size: 2rem;">Bristol Regional Food Network</h1>
-    <p class="lead" style="font-size: 1.1rem;">
-        Connecting Bristol with local food producers within a 20-mile radius.
-    </p>
-</div>
-
-<div class="card-grid" style="margin-top: 1.5rem;">
-    <a href="{% url 'core:customer-product-list' %}" class="link-card" style="padding: 1.5rem;">
-        <strong style="font-size: 1.1rem;">🛒 Shop Local</strong>
-        <span>Browse fresh produce from local farms and food producers</span>
-    </a>
-    
-    <a href="{% url 'core:customer-login' %}" class="link-card" style="padding: 1.5rem;">
-        <strong style="font-size: 1.1rem;">👤 Customer Login</strong>
-        <span>Sign in to your account to place orders</span>
-    </a>
-    
-    <a href="{% url 'core:producer-login' %}" class="link-card" style="padding: 1.5rem;">
-        <strong style="font-size: 1.1rem;">🌾 Producer Login</strong>
-        <span>Manage your products and orders</span>
-    </a>
-    
-    <a href="{% url 'core:producer-register' %}" class="link-card" style="padding: 1.5rem;">
-        <strong style="font-size: 1.1rem;">✨ Become a Producer</strong>
-        <span>Join the network and sell to local customers</span>
-    </a>
-</div>
-
-<div class="card" style="margin-top: 1.5rem;">
-    <h2 style="margin-top: 0;">Why Bristol Regional Food Network?</h2>
-    
-    <div class="stack">
-        <div class="card" style="background: #f9fafb;">
-            <h3 style="margin-top: 0;">🥬 Fresh & Local</h3>
-            <p class="lead" style="margin-bottom: 0;">
-                All products come from producers within 20 miles of Bristol, ensuring freshness and supporting the local economy.
-            </p>
+<section class="hero-card">
+    <div class="page-intro" style="margin-bottom: 0;">
+        <div>
+            <div class="eyebrow">Producer features</div>
+            <h1>Manage local produce without managing chaos.</h1>
+            <p>The producer workspace covers seasonal product updates, incoming orders, weekly settlements, traceability, surplus discounts, and farm stories for the Bristol Regional Food Network.</p>
         </div>
-        
-        <div class="card" style="background: #f9fafb;">
-            <h3 style="margin-top: 0;">🌱 Know Your Food</h3>
-            <p class="lead" style="margin-bottom: 0;">
-                Full traceability from farm to table. See exactly where your food comes from and how it's produced.
-            </p>
-        </div>
-        
-        <div class="card" style="background: #f9fafb;">
-            <h3 style="margin-top: 0;">🤝 Fair for Producers</h3>
-            <p class="lead" style="margin-bottom: 0;">
-                Only 5% network commission means producers keep 95% of the sale price. Weekly settlements ensure reliable income.
-            </p>
-        </div>
-        
-        <div class="card" style="background: #f9fafb;">
-            <h3 style="margin-top: 0;">♻️ Sustainable</h3>
-            <p class="lead" style="margin-bottom: 0;">
-                Reduced food miles, seasonal eating, and direct relationships between customers and producers.
-            </p>
+        <div class="actions">
+            {% if user.is_authenticated %}
+                <a href="{% url 'core:dashboard' %}" class="btn primary">Open dashboard</a>
+            {% else %}
+                <a href="{% url 'core:producer-register' %}" class="btn primary">Register as producer</a>
+                <a href="{% url 'core:producer-login' %}" class="btn secondary">Producer login</a>
+            {% endif %}
         </div>
     </div>
-</div>
+</section>
 
-<div class="card" style="margin-top: 1.5rem; background: #ecfdf5; border-color: #a7f3d0;">
-    <h2 style="margin-top: 0; color: #065f46;">How It Works</h2>
-    
-    <ol style="color: #065f46; margin-bottom: 0; padding-left: 1.25rem;">
-        <li style="margin-bottom: 0.75rem;">
-            <strong>Browse</strong> — Explore products from local farms, dairies, bakeries, and more
-        </li>
-        <li style="margin-bottom: 0.75rem;">
-            <strong>Order</strong> — Add items to your basket (48-hour lead time for fresh preparation)
-        </li>
-        <li style="margin-bottom: 0.75rem;">
-            <strong>Pay</strong> — Secure payment, with 95% going directly to producers
-        </li>
-        <li style="margin-bottom: 0;">
-            <strong>Collect</strong> — Pick up from the producer or arrange local delivery
-        </li>
-    </ol>
-</div>
+<section class="grid three" style="margin-top: 1rem;">
+    <article class="card">
+        <div class="eyebrow">Products</div>
+        <h2 style="margin-top: 0.4rem;">Seasonal inventory</h2>
+        <p>Track stock, harvest dates, best-before windows, allergen information, storage notes, and farm origin in one producer-friendly form.</p>
+    </article>
+    <article class="card">
+        <div class="eyebrow">Orders</div>
+        <h2 style="margin-top: 0.4rem;">48-hour visibility</h2>
+        <p>Review producer-specific order items, collection or delivery details, postcode distance estimates, and lead-time warnings before fulfilment.</p>
+    </article>
+    <article class="card">
+        <div class="eyebrow">Community</div>
+        <h2 style="margin-top: 0.4rem;">Stories and surplus</h2>
+        <p>Publish discounted surplus produce, seasonal recipes, storage guidance, and farm stories to strengthen local food connections.</p>
+    </article>
+</section>
 
-<div class="card actions" style="margin-top: 1.5rem; justify-content: center;">
-    <a href="{% url 'core:customer-product-list' %}" class="btn primary" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
-        Start Shopping
-    </a>
-    <a href="{% url 'core:customer-register' %}" class="btn" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
-        Create Account
-    </a>
-</div>
+<section class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Customer shop and quick links</h2>
+    <ul>
+        <li><a href="{% url 'core:customer-product-list' %}"><strong>Browse produce</strong> (search and categories)</a></li>
+        <li><a href="{% url 'core:customer-login' %}">Customer login</a> · <a href="{% url 'core:customer-register' %}">Customer register</a> · <a href="{% url 'core:customer-logout' %}">Sign out</a></li>
+        <li><a href="{% url 'core:customer-checkout' %}">Checkout</a> (select items on the browse page first)</li>
+        <li><a href="{% url 'core:producer-login' %}">Producer login</a> · <a href="{% url 'core:producer-register' %}">Producer register</a></li>
+        <li><a href="{% url 'core:product-list' %}">Producer product list</a> · <a href="{% url 'core:product-create' %}">Create product</a></li>
+        <li><a href="/admin/">Admin</a> · <a href="/admin/login/">Admin login</a></li>
+    </ul>
+</section>
 {% endblock %}

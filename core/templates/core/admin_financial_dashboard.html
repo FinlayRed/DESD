@@ -1,0 +1,114 @@
+{% extends "core/base.html" %}
+
+{% block title %}Financial Dashboard – BRFN Admin{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <h1>Financial Dashboard</h1>
+        <p>Network commission monitoring and financial overview.</p>
+    </div>
+    <div class="actions">
+        <a href="{% url 'admin_reports:commission-report' %}" class="btn">Commission Report</a>
+        <a href="{% url 'admin_reports:settlement-overview' %}" class="btn">Settlements</a>
+        <a href="{% url 'admin_reports:traceability-report' %}" class="btn">Traceability</a>
+    </div>
+</div>
+
+<!-- Date range filter -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <form method="get" class="filters">
+        <div>
+            <label for="from">From date</label>
+            <input type="date" id="from" name="from" value="{{ date_from }}">
+        </div>
+        <div>
+            <label for="to">To date</label>
+            <input type="date" id="to" name="to" value="{{ date_to }}">
+        </div>
+        <div style="align-self: flex-end;">
+            <button type="submit" class="btn primary">Filter</button>
+            {% if date_from or date_to %}
+                <a href="{% url 'admin_reports:financial-dashboard' %}" class="btn secondary">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Summary statistics -->
+<div class="grid three" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <div class="eyebrow">Total Revenue</div>
+        <span class="stat-value">£{{ total_revenue|floatformat:2 }}</span>
+        <p>From {{ order_count }} order{{ order_count|pluralize }}</p>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Network Commission (5%)</div>
+        <span class="stat-value">£{{ total_commission|floatformat:2 }}</span>
+        <p>BRFN platform share</p>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Producer Payments (95%)</div>
+        <span class="stat-value">£{{ total_producer_pay|floatformat:2 }}</span>
+        <p>Distributed to producers</p>
+    </div>
+</div>
+
+<div class="grid two">
+    <!-- Year-to-date -->
+    <div class="card">
+        <div class="section-title">
+            <div>
+                <h2>Year-to-Date</h2>
+                <p>Running totals for the current tax year.</p>
+            </div>
+        </div>
+        <table>
+            <tr>
+                <td>YTD Revenue</td>
+                <td style="text-align: right; font-weight: bold;">£{{ ytd_revenue|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>YTD Commission</td>
+                <td style="text-align: right; font-weight: bold;">£{{ ytd_commission|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Outstanding settlements -->
+    <div class="card">
+        <div class="section-title">
+            <div>
+                <h2>Outstanding Settlements</h2>
+                <p>Pending payments to producers.</p>
+            </div>
+            <a href="{% url 'admin_reports:settlement-overview' %}?status=pending" class="btn">View all</a>
+        </div>
+        <table>
+            <tr>
+                <td>Pending settlements</td>
+                <td style="text-align: right; font-weight: bold;">{{ pending_settlement_count }}</td>
+            </tr>
+            <tr>
+                <td>Pending amount</td>
+                <td style="text-align: right; font-weight: bold;">£{{ pending_settlement_amount|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- Quick links -->
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="section-title">
+        <h2>Export Reports</h2>
+    </div>
+    <div class="actions">
+        <a href="{% url 'admin_reports:commission-export' %}{% if date_from or date_to %}?from={{ date_from }}&to={{ date_to }}{% endif %}" class="btn">
+            Download Commission CSV
+        </a>
+        <a href="{% url 'admin_reports:traceability-export' %}" class="btn">
+            Download Traceability CSV
+        </a>
+    </div>
+</div>
+{% endblock %}

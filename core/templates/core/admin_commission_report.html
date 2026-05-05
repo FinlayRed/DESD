@@ -1,0 +1,105 @@
+{% extends "core/base.html" %}
+
+{% block title %}Commission Report – BRFN Admin{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <h1>Commission Report</h1>
+        <p>Per-order breakdown of the 5% network commission.</p>
+    </div>
+    <div class="actions">
+        <a href="{% url 'admin_reports:financial-dashboard' %}" class="btn">Back to Dashboard</a>
+        <a href="{% url 'admin_reports:commission-export' %}{% if date_from or date_to %}?from={{ date_from }}&to={{ date_to }}{% endif %}" class="btn primary">Export CSV</a>
+    </div>
+</div>
+
+<!-- Date range filter -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <form method="get" class="filters">
+        <div>
+            <label for="from">From date</label>
+            <input type="date" id="from" name="from" value="{{ date_from }}">
+        </div>
+        <div>
+            <label for="to">To date</label>
+            <input type="date" id="to" name="to" value="{{ date_to }}">
+        </div>
+        <div style="align-self: flex-end;">
+            <button type="submit" class="btn primary">Filter</button>
+            {% if date_from or date_to %}
+                <a href="{% url 'admin_reports:commission-report' %}" class="btn secondary">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Period totals -->
+<div class="grid three" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <div class="eyebrow">Period Revenue</div>
+        <span class="stat-value">£{{ total_revenue|floatformat:2 }}</span>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Period Commission</div>
+        <span class="stat-value">£{{ total_commission|floatformat:2 }}</span>
+    </div>
+    <div class="stat-card">
+        <div class="eyebrow">Period Producer Pay</div>
+        <span class="stat-value">£{{ total_producer|floatformat:2 }}</span>
+    </div>
+</div>
+
+<!-- Orders table -->
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order Ref</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th style="text-align: right;">Total (£)</th>
+                    <th style="text-align: right;">Commission 5% (£)</th>
+                    <th style="text-align: right;">Producer 95% (£)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>
+                        <strong>{{ payment.order.reference|default:"—" }}</strong>
+                    </td>
+                    <td>{{ payment.created_at|date:"d M Y H:i" }}</td>
+                    <td>{{ payment.order.customer_display_name }}</td>
+                    <td style="text-align: right;">{{ payment.total_amount|floatformat:2 }}</td>
+                    <td style="text-align: right;">{{ payment.network_commission|floatformat:2 }}</td>
+                    <td style="text-align: right;">{{ payment.producer_amount|floatformat:2 }}</td>
+                    <td>
+                        <a href="{% url 'admin_reports:order-financial-detail' payment.order.pk %}" class="btn" style="font-size: 0.85rem;">Detail</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">No payments found for this period.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="actions" style="margin-top: 1rem; justify-content: center;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if date_from %}&from={{ date_from }}{% endif %}{% if date_to %}&to={{ date_to }}{% endif %}" class="btn">Previous</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if date_from %}&from={{ date_from }}{% endif %}{% if date_to %}&to={{ date_to }}{% endif %}" class="btn">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

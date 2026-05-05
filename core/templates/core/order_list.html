@@ -1,0 +1,69 @@
+{% extends "core/base.html" %}
+
+{% block title %}Orders{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Orders</div>
+        <h1>Incoming producer orders</h1>
+        <p>See incoming orders from your customers.</p>
+    </div>
+</div>
+
+<div class="card stack">
+    <form method="get" class="filters">
+        <select name="status">
+            <option value="">All items</option>
+            {% for value, label in item_statuses %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="primary">Filter orders</button>
+    </form>
+    {% if orders %}
+        {% for order in orders %}
+            <article class="list-item">
+                <div class="actions" style="justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <strong>{{ order.reference }}</strong>
+                        <p class="meta" style="margin: 0.35rem 0 0;">{{ order.customer_display_name }} · {{ order.get_delivery_method_display }}{% if order.fulfilment_date %} · {{ order.fulfilment_date }}{% endif %}</p>
+                    </div>
+                    <a href="{% url 'core:order-detail' order.pk %}" class="btn">Open order</a>
+                </div>
+                <div class="chip-row" style="margin-top: 0.8rem;">
+                    {% if order.paid %}<span class="badge">Paid</span>{% endif %}
+                    <span class="badge">{{ order.get_status_display }}</span>
+                    {% if order.delivery_postcode %}<span class="badge">{{ order.delivery_postcode }}</span>{% endif %}
+                </div>
+                <div class="table-wrap" style="margin-top: 1rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Status</th>
+                                <th>Food miles</th>
+                                <th>Lead time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.producer_items %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.get_status_display }}</td>
+                                    <td>{% if item.food_miles != None %}{{ item.food_miles }} miles{% else %}-{% endif %}</td>
+                                    <td>{% if item.lead_time_warning %}<span class="badge alert">Under 48h</span>{% else %}<span class="badge">OK</span>{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        {% endfor %}
+    {% else %}
+        <p class="empty-state">No producer orders yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

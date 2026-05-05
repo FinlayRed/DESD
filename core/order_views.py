@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, TemplateView
 
 from .models import Order, OrderItem, Payment, Product
+from .traceability import create_traceability_records
 
 
 # =============================================================================
@@ -313,9 +314,12 @@ class CheckoutView(LoginRequiredMixin, TemplateView):
         order = Order.objects.create(
             customer=request.user,
             status=Order.STATUS_PENDING,
+            customer_name=request.user.get_full_name(),
+            customer_email=request.user.email,
             delivery_postcode=request.POST.get("postcode", ""),
             delivery_address=request.POST.get("address", ""),
             collection_date=request.POST.get("collection_date") or None,
+            fulfilment_date=request.POST.get("collection_date") or None,
         )
 
         # Create order items
@@ -399,6 +403,23 @@ class PaymentSuccessView(LoginRequiredMixin, TemplateView):
     login_url = "/customer/login/"
 
     def get(self, request, *args, **kwargs):
+        order = get_object_or_404(
+            Order,
+            id=kwargs.get("order_id"),
+            customer=request.user,
+        )
+        payment = getattr(order, "payment", None)
+        if payment and payment.status != Payment.STATUS_COMPLETED:
+            payment.status = Payment.STATUS_COMPLETED
+            payment.completed_at = timezone.now()
+            payment.save(update_fields=["status", "completed_at"])
+        if not order.paid or order.status == Order.STATUS_PENDING:
+            order.paid = True
+            order.status = Order.STATUS_CONFIRMED
+            order.confirmed_at = timezone.now()
+            order.save(update_fields=["paid", "status", "confirmed_at", "updated_at"])
+            create_traceability_records(order)
+
         # Clear the cart after successful payment
         cart = Cart(request)
         try:

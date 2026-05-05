@@ -3,16 +3,18 @@
 {% block title %}Delete Product{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">Delete Product</h1>
-    <p>Are you sure you want to delete <strong>{{ object.name }}</strong>?</p>
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="actions" style="margin-top: 1rem;">
-            <button type="submit" class="btn primary">Delete</button>
-            <a href="{% url 'core:product-list' %}" class="btn">Cancel</a>
+<div class="card" style="max-width: 36rem; margin: 0 auto;">
+    <div class="stack">
+        <div>
+            <div class="eyebrow">Products</div>
+            <h1>Delete {{ object.name }}?</h1>
+            <p>This removes the product listing from the system.%s</p>
         </div>
-    </form>
+        <form method="post" class="actions">
+            {% csrf_token %}
+            <button type="submit" class="primary">Delete product</button>
+            <a href="{% url 'core:product-list' %}" class="btn secondary">Cancel</a>
+        </form>
+    </div>
 </div>
 {% endblock %}

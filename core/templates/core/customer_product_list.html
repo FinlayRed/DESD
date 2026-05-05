@@ -1,94 +1,116 @@
 {% extends "core/base.html" %}
 
-{% block title %}Browse Products{% endblock %}
+{% block title %}Browse Local Produce{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">Browse Products</h1>
-    <p class="lead">Fresh, local produce from Bristol-area producers.</p>
-</div>
+<div class="card stack">
+    <div>
+        <h1 style="margin-top: 0;">Browse Local Produce</h1>
+        <p class="lead">
+            Explore products by category, search quickly, and add items to your basket.
+        </p>
+    </div>
 
-<!-- Search & Filter -->
-<div class="card" style="margin-top: 1rem;">
-    <form method="get" action="" class="actions" style="flex-wrap: wrap;">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search products..." 
-               style="flex: 1; min-width: 200px;">
-        
-        <select name="category" style="min-width: 150px;">
-            <option value="">All Categories</option>
-            {% for key in category_keys %}
-                <option value="{{ key }}" {% if active_category == key %}selected{% endif %}>
-                    {{ key|title }}
+    <form method="get" class="actions">
+        <input
+            type="text"
+            name="q"
+            placeholder="Search products, farms, or categories"
+            value="{{ query }}"
+            style="min-width: 280px;"
+        >
+        <select name="category">
+            <option value="">All categories</option>
+            {% for category_name in category_keys %}
+                <option value="{{ category_name }}" {% if active_category == category_name %}selected{% endif %}>
+                    {{ category_name|title }}
                 </option>
             {% endfor %}
         </select>
-        
-        <button type="submit" class="btn primary">Search</button>
-        
-        {% if query or active_category %}
-            <a href="{% url 'core:customer-product-list' %}" class="btn">Clear</a>
-        {% endif %}
+        <button class="btn primary" type="submit">Search</button>
+        <a class="btn" href="{% url 'core:customer-product-list' %}">Clear</a>
     </form>
 </div>
 
-<!-- Products by Category -->
-{% for category_key, category_products in grouped_products.items %}
-    {% if category_products %}
-        <div class="card" style="margin-top: 1.5rem;">
-            <h2 style="margin-top: 0;">{{ category_key|title }}</h2>
-            
-            <div class="product-grid">
-                {% for product in category_products %}
-                    <div class="product-card">
-                        <h3>{{ product.name }}</h3>
-                        <p class="producer">{{ product.producer.business_name }}</p>
-                        <p class="lead" style="font-size: 0.9rem;">{{ product.description|truncatewords:20 }}</p>
-                        
-                        <div class="actions" style="flex-wrap: wrap; gap: 0.25rem;">
-                            {% if product.organic %}
-                                <span class="badge badge-confirmed">Organic</span>
-                            {% endif %}
-                            {% if product.seasonal_status %}
-                                <span class="badge 
-                                    {% if product.seasonal_status == 'In season' %}badge-ready
-                                    {% elif product.seasonal_status == 'Upcoming season' %}badge-pending
-                                    {% else %}badge-cancelled
-                                    {% endif %}">
-                                    {{ product.seasonal_status }}
-                                </span>
-                            {% endif %}
-                        </div>
-                        
-                        <p class="price" style="margin-top: 0.5rem;">£{{ product.price }}</p>
-                        
-                        <div class="actions" style="margin-top: auto;">
-                            {% if product.stock_quantity > 0 %}
-                                <form action="{% url 'core:cart-add' product.id %}" method="post" class="actions">
-                                    {% csrf_token %}
-                                    <input type="number" name="quantity" value="1" min="1" 
-                                           max="{{ product.stock_quantity }}" class="quantity-input" 
-                                           style="width: 50px;">
-                                    <button type="submit" class="btn primary small">Add</button>
-                                </form>
-                                <span class="lead" style="font-size: 0.8rem;">{{ product.stock_quantity }} in stock</span>
-                            {% else %}
-                                <span class="badge badge-cancelled">Out of Stock</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
+<div class="stack" style="margin-top: 1rem;">
+    {% for category_name, products_in_category in grouped_products.items %}
+        <div class="card">
+            <div class="actions space-between">
+                <h2 style="margin: 0;">{{ category_name|title }}</h2>
+                <span class="lead">{{ products_in_category|length }} item{{ products_in_category|pluralize }}</span>
             </div>
-        </div>
-    {% endif %}
-{% empty %}
-    <div class="card" style="margin-top: 1rem;">
-        <p class="lead">No products found matching your criteria.</p>
-        <a href="{% url 'core:customer-product-list' %}" class="btn">View All Products</a>
-    </div>
-{% endfor %}
 
-<!-- Cart Link -->
-<div class="card actions" style="margin-top: 1.5rem; justify-content: center;">
-    <a href="{% url 'core:cart' %}" class="btn primary">View Basket</a>
+            {% if products_in_category %}
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Farm Origin</th>
+                        <th>Harvest / Availability</th>
+                        <th>Season Status</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Basket</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for product in products_in_category %}
+                        <tr>
+                            <td>
+                                <strong>{{ product.name }}</strong><br>
+                                <span class="lead">{{ product.description|truncatechars:90 }}</span>
+                            </td>
+                            <td>
+                                {{ product.producer.business_name }}<br>
+                                <span class="lead">{{ product.producer.postcode }}</span>
+                            </td>
+                            <td>
+                                {% if product.available_from %}
+                                    {{ product.available_from }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                                to
+                                {% if product.available_to %}
+                                    {{ product.available_to }}
+                                {% else %}
+                                    ongoing
+                                {% endif %}
+                            </td>
+                            <td>{{ product.seasonal_status }}</td>
+                            <td>£{{ product.price }}</td>
+                            <td>{{ product.stock_quantity }}</td>
+                            <td>
+                                {% if product.stock_quantity > 0 %}
+                                    <form method="post" action="{% url 'core:cart-add' product.id %}" class="actions">
+                                        {% csrf_token %}
+                                        <input
+                                            type="number"
+                                            name="quantity"
+                                            value="{{ product.minimum_order_quantity }}"
+                                            min="{{ product.minimum_order_quantity }}"
+                                            max="{{ product.stock_quantity }}"
+                                            style="width: 5rem;"
+                                        >
+                                        <button class="btn primary" type="submit">Add</button>
+                                    </form>
+                                {% else %}
+                                    <span class="badge alert">Out of stock</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="lead">No products currently listed in this category.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <div class="card actions space-between">
+        <span class="lead">Ready to review your selected items?</span>
+        <a class="btn primary" href="{% url 'core:cart' %}">View Basket</a>
+    </div>
 </div>
 {% endblock %}

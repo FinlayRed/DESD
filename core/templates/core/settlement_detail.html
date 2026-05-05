@@ -1,0 +1,53 @@
+{% extends "core/base.html" %}
+
+{% block title %}Settlement Audit{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Settlement audit trail</div>
+        <h1>{{ settlement.week_start }} to {{ settlement.week_end }}</h1>
+        <p>Every paid producer order item in this weekly window is shown below with gross, commission, and net values.</p>
+    </div>
+    <div class="chip-row">
+        <span class="badge">{{ settlement.get_status_display }}</span>
+        <span class="badge">Gross {{ settlement.gross_amount }}</span>
+        <span class="badge">Net {{ settlement.net_amount }}</span>
+    </div>
+</div>
+
+<section class="grid three" style="margin-bottom: 1rem;">
+    <article class="stat-card"><span class="eyebrow">Gross</span><span class="stat-value">{{ settlement.gross_amount }}</span><p>Total paid order value</p></article>
+    <article class="stat-card"><span class="eyebrow">Commission</span><span class="stat-value">{{ settlement.commission_amount }}</span><p>5% network fee</p></article>
+    <article class="stat-card"><span class="eyebrow">Net</span><span class="stat-value">{{ settlement.net_amount }}</span><p>Producer settlement amount</p></article>
+</section>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Gross</th>
+                    <th>Commission</th>
+                    <th>Net</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in settlement.entries.all %}
+                    <tr>
+                        <td>{{ entry.order_item.order.reference }}</td>
+                        <td>{{ entry.order_item.product.name }}</td>
+                        <td>{{ entry.order_item.quantity }}</td>
+                        <td>{{ entry.gross_amount }}</td>
+                        <td>{{ entry.commission_amount }}</td>
+                        <td>{{ entry.net_amount }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

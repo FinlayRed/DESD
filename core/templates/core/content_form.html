@@ -1,0 +1,87 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Edit Content{% else %}Add Content{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/producer-form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Stories and guidance</div>
+        <h1>{% if object %}Update content item{% else %}Create content item{% endif %}</h1>
+        <p>Share recipes, storage guidance, and farm stories without leaving the producer workspace.</p>
+    </div>
+</div>
+
+<div class="minimal-form-wrap">
+    <div class="minimal-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="form-row two-col">
+                <div class="form-field{% if form.content_type.errors %} has-error{% endif %}">
+                    <label for="{{ form.content_type.id_for_label }}">Content type <span class="required">*</span></label>
+                    {{ form.content_type }}
+                    {{ form.content_type.errors }}
+                </div>
+
+                <div class="form-field{% if form.title.errors %} has-error{% endif %}">
+                    <label for="{{ form.title.id_for_label }}">Title <span class="required">*</span></label>
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+            </div>
+
+            <div class="form-row two-col">
+                <div class="form-field{% if form.season.errors %} has-error{% endif %}">
+                    <label for="{{ form.season.id_for_label }}">Season <span class="optional">(optional)</span></label>
+                    {{ form.season }}
+                    {{ form.season.errors }}
+                </div>
+
+                <div class="form-field{% if form.product.errors %} has-error{% endif %}">
+                    <label for="{{ form.product.id_for_label }}">Related product <span class="optional">(optional)</span></label>
+                    {{ form.product }}
+                    {{ form.product.errors }}
+                </div>
+            </div>
+
+            <div class="form-field{% if form.summary.errors %} has-error{% endif %}">
+                <label for="{{ form.summary.id_for_label }}">Summary <span class="optional">(optional)</span></label>
+                {{ form.summary }}
+                {{ form.summary.errors }}
+            </div>
+
+            <div class="form-field{% if form.body.errors %} has-error{% endif %}">
+                <label for="{{ form.body.id_for_label }}">Body <span class="required">*</span></label>
+                {{ form.body }}
+                {{ form.body.errors }}
+            </div>
+
+            <div class="form-field">
+                <label class="checkbox-field">
+                    {{ form.is_published }}
+                    <span>
+                        <span class="checkbox-label">Published</span>
+                    </span>
+                </label>
+                {{ form.is_published.errors }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save content</button>
+                <a href="{% url 'core:content-list' %}" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

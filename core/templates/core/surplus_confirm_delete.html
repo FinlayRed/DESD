@@ -1,0 +1,20 @@
+{% extends "core/base.html" %}
+
+{% block title %}Delete Surplus{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 36rem; margin: 0 auto;">
+    <div class="stack">
+        <div>
+            <div class="eyebrow">Surplus produce</div>
+            <h1>Delete surplus listing?</h1>
+            <p>This will remove the discounted {{ object.product.name }} listing.</p>
+        </div>
+        <form method="post" class="actions">
+            {% csrf_token %}
+            <button type="submit" class="primary">Delete listing</button>
+            <a href="{% url 'core:surplus-list' %}" class="btn secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

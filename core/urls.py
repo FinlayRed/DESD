@@ -1,118 +1,87 @@
-"""
-URL Configuration for Bristol Regional Food Network
-Combines customer browsing, cart, checkout, producer management, and order tracking.
-"""
-
-from django.urls import path
+from django.contrib.auth.views import LogoutView
+from django.urls import path, include
 
 from .views import (
-    # Home
-    HomeView,
-    # Customer Auth
     CustomerLoginView,
-    CustomerRegisterView,
-    # Producer Auth
-    ProducerLoginView,
-    ProducerRegisterView,
-    # Logout (shared)
-    user_logout_view,
-    # Customer Product Browsing
     CustomerProductBrowseView,
-    # Producer Product Management
-    ProductListView,
-    ProductCreateView,
-    ProductUpdateView,
-    ProductDeleteView,
-)
-
-from .order_views import (
-    # Cart
-    CartView,
-    CartTestView,
-    AddToCartView,
-    UpdateCartView,
-    RemoveFromCartView,
-    # Checkout & Payment
-    CheckoutView,
-    PaymentView,
-    PaymentSuccessView,
-    # Customer Orders
-    CustomerOrderListView,
-    CustomerOrderDetailView,
-    # Producer Orders
-    ProducerOrderListView,
+    CustomerRegisterView,
+    HomeView,
+    ProducerContentCreateView,
+    ProducerContentDeleteView,
+    ProducerContentListView,
+    ProducerContentUpdateView,
+    ProducerDashboardView,
+    ProducerLoginView,
     ProducerOrderDetailView,
-    UpdateOrderStatusView,
-    # Webhooks
+    ProducerOrderItemUpdateView,
+    ProducerOrderListView,
+    ProducerProfileUpdateView,
+    ProducerRegisterView,
+    ProducerSettlementDetailView,
+    ProducerSettlementListView,
+    ProducerSurplusCreateView,
+    ProducerSurplusDeleteView,
+    ProducerSurplusListView,
+    ProducerSurplusUpdateView,
+    ProductCreateView,
+    ProductDeleteView,
+    ProductListView,
+    ProductUpdateView,
+    user_logout_view,
+)
+from .order_views import (
+    AddToCartView,
+    CartView,
+    CheckoutView,
+    CustomerOrderDetailView,
+    CustomerOrderListView,
+    PaymentSuccessView,
+    PaymentView,
+    RemoveFromCartView,
+    UpdateCartView,
     stripe_webhook,
 )
 
 app_name = "core"
 
 urlpatterns = [
-    # =========================================================================
-    # HOME
-    # =========================================================================
     path("", HomeView.as_view(), name="home"),
-
-    # =========================================================================
-    # CUSTOMER AUTHENTICATION
-    # =========================================================================
+    path("customer/products/", CustomerProductBrowseView.as_view(), name="customer-product-list"),
+    path("customer/checkout/", CheckoutView.as_view(), name="customer-checkout"),
     path("customer/login/", CustomerLoginView.as_view(), name="customer-login"),
     path("customer/register/", CustomerRegisterView.as_view(), name="customer-register"),
     path("customer/logout/", user_logout_view, name="customer-logout"),
-
-    # =========================================================================
-    # CUSTOMER PRODUCT BROWSING
-    # =========================================================================
-    path("customer/products/", CustomerProductBrowseView.as_view(), name="customer-product-list"),
-
-    # =========================================================================
-    # SHOPPING CART
-    # =========================================================================
     path("cart/", CartView.as_view(), name="cart"),
-    path("cart/test/", CartTestView.as_view(), name="cart-test"),  # DEV ONLY
     path("cart/add/<int:product_id>/", AddToCartView.as_view(), name="cart-add"),
     path("cart/update/<int:product_id>/", UpdateCartView.as_view(), name="cart-update"),
     path("cart/remove/<int:product_id>/", RemoveFromCartView.as_view(), name="cart-remove"),
-
-    # =========================================================================
-    # CHECKOUT & PAYMENT
-    # =========================================================================
     path("checkout/", CheckoutView.as_view(), name="checkout"),
-    path("customer/checkout/", CheckoutView.as_view(), name="customer-checkout"),  # Alias for compatibility
     path("payment/<int:order_id>/", PaymentView.as_view(), name="payment"),
     path("payment/<int:order_id>/success/", PaymentSuccessView.as_view(), name="payment-success"),
-
-    # =========================================================================
-    # CUSTOMER ORDERS
-    # =========================================================================
     path("orders/", CustomerOrderListView.as_view(), name="customer-orders"),
     path("orders/<int:pk>/", CustomerOrderDetailView.as_view(), name="customer-order-detail"),
-
-    # =========================================================================
-    # PRODUCER AUTHENTICATION
-    # =========================================================================
+    path("webhook/stripe/", stripe_webhook, name="stripe-webhook"),
+    path("admin-reports/", include("core.admin_urls")),
+    path("producer/dashboard/", ProducerDashboardView.as_view(), name="dashboard"),
     path("producer/login/", ProducerLoginView.as_view(), name="producer-login"),
+    path("producer/logout/", LogoutView.as_view(next_page="core:home"), name="producer-logout"),
     path("producer/register/", ProducerRegisterView.as_view(), name="producer-register"),
-
-    # =========================================================================
-    # PRODUCER PRODUCT MANAGEMENT
-    # =========================================================================
+    path("producer/profile/", ProducerProfileUpdateView.as_view(), name="producer-profile"),
     path("producer/products/", ProductListView.as_view(), name="product-list"),
     path("producer/products/new/", ProductCreateView.as_view(), name="product-create"),
     path("producer/products/<int:pk>/edit/", ProductUpdateView.as_view(), name="product-update"),
     path("producer/products/<int:pk>/delete/", ProductDeleteView.as_view(), name="product-delete"),
-
-    # =========================================================================
-    # PRODUCER ORDER MANAGEMENT
-    # =========================================================================
-    path("producer/orders/", ProducerOrderListView.as_view(), name="producer-orders"),
-    path("producer/orders/<int:pk>/", ProducerOrderDetailView.as_view(), name="producer-order-detail"),
-    path("producer/orders/<int:order_id>/update-status/", UpdateOrderStatusView.as_view(), name="producer-order-status"),
-
-    # =========================================================================
-    # WEBHOOKS (Stripe)
-    # =========================================================================
-    path("webhook/stripe/", stripe_webhook, name="stripe-webhook"),
+    path("producer/orders/", ProducerOrderListView.as_view(), name="order-list"),
+    path("producer/orders/<int:pk>/", ProducerOrderDetailView.as_view(), name="order-detail"),
+    path("producer/order-items/<int:pk>/", ProducerOrderItemUpdateView.as_view(), name="order-item-update"),
+    path("producer/settlements/", ProducerSettlementListView.as_view(), name="settlement-list"),
+    path("producer/settlements/<int:pk>/", ProducerSettlementDetailView.as_view(), name="settlement-detail"),
+    path("producer/surplus/", ProducerSurplusListView.as_view(), name="surplus-list"),
+    path("producer/surplus/new/", ProducerSurplusCreateView.as_view(), name="surplus-create"),
+    path("producer/surplus/<int:pk>/edit/", ProducerSurplusUpdateView.as_view(), name="surplus-update"),
+    path("producer/surplus/<int:pk>/delete/", ProducerSurplusDeleteView.as_view(), name="surplus-delete"),
+    path("producer/content/", ProducerContentListView.as_view(), name="content-list"),
+    path("producer/content/new/", ProducerContentCreateView.as_view(), name="content-create"),
+    path("producer/content/<int:pk>/edit/", ProducerContentUpdateView.as_view(), name="content-update"),
+    path("producer/content/<int:pk>/delete/", ProducerContentDeleteView.as_view(), name="content-delete"),
 ]
