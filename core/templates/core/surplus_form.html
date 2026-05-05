@@ -20,27 +20,27 @@
     <div class="minimal-form">
         <form method="post" novalidate>
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
             <div class="form-errors">
                 {{ form.non_field_errors }}
             </div>
             {% endif %}
-            
+
             <div class="form-row two-col">
                 <div class="form-field{% if form.product.errors %} has-error{% endif %}">
                     <label for="{{ form.product.id_for_label }}">Product <span class="required">*</span></label>
                     {{ form.product }}
                     {{ form.product.errors }}
                 </div>
-                
+
                 <div class="form-field{% if form.quantity.errors %} has-error{% endif %}">
                     <label for="{{ form.quantity.id_for_label }}">Quantity <span class="required">*</span></label>
                     {{ form.quantity }}
                     {{ form.quantity.errors }}
                 </div>
             </div>
-            
+
             <div class="form-row two-col">
                 <div class="form-field{% if form.discounted_price.errors %} has-error{% endif %}">
                     <label for="{{ form.discounted_price.id_for_label }}">Discounted price <span class="required">*</span></label>
@@ -54,13 +54,13 @@
                     {{ form.available_until.errors }}
                 </div>
             </div>
-            
+
             <div class="form-field{% if form.note.errors %} has-error{% endif %}">
                 <label for="{{ form.note.id_for_label }}">Note <span class="optional">(optional)</span></label>
                 {{ form.note }}
                 {{ form.note.errors }}
             </div>
-            
+
             <div class="form-field">
                 <label class="checkbox-field">
                     {{ form.is_active }}
@@ -70,7 +70,7 @@
                 </label>
                 {{ form.is_active.errors }}
             </div>
-            
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Save surplus listing</button>
                 <a href="{% url 'core:surplus-list' %}" class="btn-secondary">Cancel</a>

@@ -1,0 +1,57 @@
+{% extends "core/base.html" %}
+
+{% block title %}Order Confirmed - #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">✓</div>
+    <h1 style="margin-top: 0; color: #059669;">Order Confirmed!</h1>
+    <p class="lead">Thank you for supporting local Bristol producers.</p>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Order #{{ order.id }}</h2>
+    
+    <table>
+        <tbody>
+            <tr>
+                <td>Status</td>
+                <td style="text-align: right;">
+                    <span class="badge badge-confirmed">{{ order.get_status_display }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>Order Date</td>
+                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+            </tr>
+            {% if order.collection_date %}
+            <tr>
+                <td>Collection Date</td>
+                <td style="text-align: right;"><strong>{{ order.collection_date|date:"D, d M Y" }}</strong></td>
+            </tr>
+            {% endif %}
+            {% if order.delivery_postcode %}
+            <tr>
+                <td>Delivery Postcode</td>
+                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 1rem; background: #ecfdf5; border-color: #a7f3d0;">
+    <h3 style="margin-top: 0; color: #065f46;">What Happens Next?</h3>
+    <ol style="color: #065f46; margin-bottom: 0;">
+        <li style="margin-bottom: 0.5rem;">Each producer will receive your order details</li>
+        <li style="margin-bottom: 0.5rem;">They will prepare your items for collection</li>
+        <li style="margin-bottom: 0.5rem;">You'll be notified when items are ready</li>
+        <li>Collect from the producer or arrange delivery</li>
+    </ol>
+</div>
+
+<div class="card actions space-between" style="margin-top: 1rem;">
+    <a href="{% url 'core:customer-product-list' %}" class="btn">Continue Shopping</a>
+    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary">View Order Details</a>
+</div>
+{% endblock %}

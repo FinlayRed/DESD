@@ -1,0 +1,148 @@
+{% extends "core/base.html" %}
+
+{% block title %}Order #{{ order.id }} - Producer View{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="actions space-between">
+        <h1 style="margin: 0;">Order #{{ order.id }}</h1>
+        <span class="badge 
+            {% if order.status == 'pending' %}badge-pending
+            {% elif order.status == 'confirmed' %}badge-confirmed
+            {% elif order.status == 'processing' %}badge-processing
+            {% elif order.status == 'ready' %}badge-ready
+            {% elif order.status == 'delivered' %}badge-delivered
+            {% elif order.status == 'cancelled' %}badge-cancelled
+            {% endif %}" style="font-size: 1rem;">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+</div>
+
+<!-- Multi-vendor notice -->
+{% if is_multi_vendor %}
+    <div class="card" style="margin-top: 1rem; background: #eff6ff; border-color: #bfdbfe;">
+        <p style="margin: 0; color: #1e40af;">
+            <strong>Multi-vendor order</strong> — This order also contains items from other suppliers.
+            You're only seeing your products below.
+        </p>
+    </div>
+{% endif %}
+
+<!-- Customer Info -->
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Customer Details</h2>
+    
+    <table>
+        <tbody>
+            <tr>
+                <td>Customer</td>
+                <td style="text-align: right;">{{ order.customer.email }}</td>
+            </tr>
+            <tr>
+                <td>Order Date</td>
+                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+            </tr>
+            {% if order.collection_date %}
+            <tr>
+                <td>Requested Collection</td>
+                <td style="text-align: right;"><strong>{{ order.collection_date|date:"D, d M Y" }}</strong></td>
+            </tr>
+            {% endif %}
+            {% if order.delivery_postcode %}
+            <tr>
+                <td>Delivery Postcode</td>
+                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
+            </tr>
+            {% endif %}
+            {% if order.delivery_address %}
+            <tr>
+                <td>Delivery Address</td>
+                <td style="text-align: right;">{{ order.delivery_address }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Your Items -->
+<div class="card" style="margin-top: 1rem;">
+    <h2 style="margin-top: 0;">Your Items in This Order</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>
+                        {{ item.product.name }}
+                        {% if item.product.allergen_info %}
+                            <br><small class="lead">Allergens: {{ item.product.allergen_info }}</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>£{{ item.price }}</td>
+                    <td>£{{ item.line_total }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="font-size: 1.1em;">
+                <td colspan="3" style="text-align: right;"><strong>Your Total:</strong></td>
+                <td><strong>£{{ subtotal }}</strong></td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: right;" class="lead">Less 5% commission:</td>
+                <td class="lead">-£{{ subtotal|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<!-- Update Status -->
+{% if order.status != 'delivered' and order.status != 'cancelled' %}
+    <div class="card" style="margin-top: 1rem;">
+        <h2 style="margin-top: 0;">Update Status</h2>
+        
+        <form action="{% url 'core:producer-order-status' order_id=order.id %}" method="post">
+            {% csrf_token %}
+            <div class="actions">
+                {% if order.status == 'confirmed' %}
+                    <button type="submit" name="status" value="processing" class="btn primary">
+                        Mark as Processing
+                    </button>
+                {% endif %}
+                {% if order.status == 'processing' %}
+                    <button type="submit" name="status" value="ready" class="btn success">
+                        Mark as Ready for Collection
+                    </button>
+                {% endif %}
+                {% if order.status == 'ready' and not is_multi_vendor %}
+                    <button type="submit" name="status" value="delivered" class="btn success">
+                        Mark as Delivered
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+        
+        {% if is_multi_vendor and order.status == 'ready' %}
+            <p class="lead" style="margin-top: 0.75rem;">
+                This is a multi-vendor order. The overall order status will update when all vendors have marked their items as ready.
+            </p>
+        {% endif %}
+    </div>
+{% endif %}
+
+<!-- Actions -->
+<div class="card actions space-between" style="margin-top: 1rem;">
+    <a href="{% url 'core:producer-orders' %}" class="btn">Back to Orders</a>
+    <a href="{% url 'core:product-list' %}" class="btn">Manage Products</a>
+</div>
+{% endblock %}

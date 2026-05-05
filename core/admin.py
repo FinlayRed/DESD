@@ -11,7 +11,7 @@ from .models import (
     Product,
     SettlementEntry,
     SurplusListing,
-    TraceabilityRecord,    
+    TraceabilityRecord,
 )
 
 

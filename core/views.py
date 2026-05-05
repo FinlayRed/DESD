@@ -168,7 +168,6 @@ class ProducerDashboardView(ProducerAccessMixin, TemplateView):
         )
         return context
 
-
 class ProducerProfileUpdateView(ProducerAccessMixin, UpdateView):
     model = Producer
     form_class = ProducerProfileForm
@@ -541,4 +540,3 @@ class CustomerCheckoutView(TemplateView):
         context["vendor_groups"] = list(vendor_groups.values())
         context["is_multi_vendor"] = len(vendor_groups) > 1
         return context
-

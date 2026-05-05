@@ -20,25 +20,25 @@
     <div class="minimal-form">
         <form method="post" novalidate>
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
             <div class="form-errors">
                 {{ form.non_field_errors }}
             </div>
             {% endif %}
-            
+
             <div class="form-field{% if form.email.errors %} has-error{% endif %}">
                 <label for="{{ form.email.id_for_label }}">Email</label>
                 {{ form.email }}
                 {{ form.email.errors }}
             </div>
-            
+
             <div class="form-field{% if form.password.errors %} has-error{% endif %}">
                 <label for="{{ form.password.id_for_label }}">Password</label>
                 {{ form.password }}
                 {{ form.password.errors }}
             </div>
-            
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Sign in</button>
                 <a class="btn-secondary" href="{% url 'core:producer-register' %}">Create account</a>

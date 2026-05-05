@@ -1,0 +1,106 @@
+{% extends "core/base.html" %}
+
+{% block title %}Your Basket{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">Your Basket</h1>
+    <p class="lead">Review your items before checkout.</p>
+</div>
+
+{% if cart and items_by_producer %}
+    <!-- Multi-vendor notice -->
+    {% if is_multi_vendor %}
+        <div class="card" style="margin-top: 1rem; background: #eff6ff; border-color: #bfdbfe;">
+            <p style="margin: 0; color: #1e40af;">
+                <strong>Multi-vendor order</strong> — Your basket contains items from {{ producer_count }} different suppliers.
+                Each will prepare and deliver their items separately.
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Items grouped by producer -->
+    <div class="stack" style="margin-top: 1rem;">
+        {% for producer_id, vendor in items_by_producer.items %}
+            <div class="card">
+                <h3 style="margin-top: 0;">{{ vendor.producer.business_name }}</h3>
+                <p class="lead">{{ vendor.producer.postcode }}</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                            <th class="table-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in vendor.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong>
+                                    {% if item.product.organic %}
+                                        <span class="badge badge-confirmed" style="margin-left: 0.5rem;">Organic</span>
+                                    {% endif %}
+                                </td>
+                                <td>£{{ item.price }}</td>
+                                <td>
+                                    <form action="{% url 'core:cart-update' item.product.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" 
+                                               min="1" max="{{ item.product.stock_quantity }}" 
+                                               class="quantity-input" style="width: 60px;">
+                                        <button type="submit" class="btn small">Update</button>
+                                    </form>
+                                </td>
+                                <td><strong>£{{ item.total_price }}</strong></td>
+                                <td>
+                                    <form action="{% url 'core:cart-remove' item.product.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn small danger">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
+                            <td><strong>£{{ vendor.subtotal }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Cart Total -->
+    <div class="card" style="margin-top: 1rem;">
+        <h2 style="margin-top: 0;">Order Total</h2>
+        <table>
+            <tbody>
+                <tr>
+                    <td>Items ({{ cart|length }})</td>
+                    <td style="text-align: right;"><strong>£{{ cart.total_price }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Actions -->
+    <div class="card actions space-between" style="margin-top: 1rem;">
+        <a href="{% url 'core:customer-product-list' %}" class="btn">Continue Shopping</a>
+        <a href="{% url 'core:checkout' %}" class="btn primary">Proceed to Checkout</a>
+    </div>
+
+{% else %}
+    <!-- Empty Cart -->
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">Your basket is empty.</p>
+        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
+    </div>
+{% endif %}
+{% endblock %}
