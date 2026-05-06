@@ -81,6 +81,96 @@ class ProducerAuthTests(TestCase):
         self.assertContains(response, "This account is not registered as a producer.")
 
 
+class CustomerAuthTests(TestCase):
+    def test_customer_register_creates_user_and_logs_in(self):
+        response = self.client.post(
+            reverse("core:customer-register"),
+            {
+                "email": "customer@example.com",
+                "password1": "strongpass123",
+                "password2": "strongpass123",
+            },
+        )
+
+        self.assertRedirects(response, reverse("core:customer-product-list"))
+        user_model = get_user_model()
+        user = user_model.objects.get(email="customer@example.com")
+        self.assertEqual(user.username, "customer@example.com")
+        self.assertEqual(self.client.session.get("_auth_user_id"), str(user.id))
+
+    def test_customer_login_with_email(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="testpass123",
+        )
+
+        response = self.client.post(
+            reverse("core:customer-login"),
+            {
+                "email": "customer@example.com",
+                "password": "testpass123",
+            },
+        )
+
+        self.assertRedirects(response, reverse("core:customer-product-list"))
+        self.assertEqual(self.client.session.get("_auth_user_id"), str(user.id))
+
+    def test_customer_login_rejects_producer_account(self):
+        user_model = get_user_model()
+        producer_user = user_model.objects.create_user(
+            username="producer@example.com",
+            email="producer@example.com",
+            password="testpass123",
+        )
+        Producer.objects.create(user=producer_user, business_name="Farm Co", postcode="BS1 1AA")
+
+        response = self.client.post(
+            reverse("core:customer-login"),
+            {
+                "email": "producer@example.com",
+                "password": "testpass123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This account is registered as a producer. Please use producer login.")
+
+    def test_customer_login_rejects_invalid_password(self):
+        user_model = get_user_model()
+        user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="testpass123",
+        )
+
+        response = self.client.post(
+            reverse("core:customer-login"),
+            {
+                "email": "customer@example.com",
+                "password": "wrongpass123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please enter a correct email and password.")
+
+    def test_customer_logout_clears_session(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="testpass123",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("core:customer-logout"))
+
+        self.assertRedirects(response, reverse("core:home"))
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+
 class ProducerFeatureBase(TestCase):
     def setUp(self):
         user_model = get_user_model()

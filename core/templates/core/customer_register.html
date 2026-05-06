@@ -1,38 +1,57 @@
 {% extends "core/base.html" %}
+{% load static %}
 
 {% block title %}Customer register{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/producer-form.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 520px; margin: 0 auto;">
-    <h1 style="margin-top: 0;">Create a customer account</h1>
-    <p>Register to start shopping. To sell produce, use <a href="{% url 'core:producer-register' %}">producer registration</a> instead.</p>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer onboarding</div>
+        <h1>Create your customer account</h1>
+        <p>Register to start shopping for fresh produce. If you want to sell, use <a href="{% url 'core:producer-register' %}">producer registration</a> instead.</p>
+    </div>
+</div>
 
-    <form method="post">
-        {% csrf_token %}
+<div class="minimal-form-wrap">
+    <div class="minimal-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
 
-        {% if form.non_field_errors %}
-            {{ form.non_field_errors }}
-        {% endif %}
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
 
-        <p>
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {{ form.email.errors }}
-        </p>
-        <p>
-            {{ form.password1.label_tag }}
-            {{ form.password1 }}
-            {{ form.password1.errors }}
-        </p>
-        <p>
-            {{ form.password2.label_tag }}
-            {{ form.password2 }}
-            {{ form.password2.errors }}
-        </p>
-        <div class="actions" style="margin-top: 1rem;">
-            <button type="submit" class="btn primary">Create account</button>
-            <a class="btn" href="{% url 'core:customer-login' %}">Already have an account?</a>
-        </div>
-    </form>
+            <div class="form-field{% if form.email.errors %} has-error{% endif %}">
+                <label for="{{ form.email.id_for_label }}">Email <span class="required">*</span></label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+
+            <div class="form-row two-col">
+                <div class="form-field{% if form.password1.errors %} has-error{% endif %}">
+                    <label for="{{ form.password1.id_for_label }}">Password <span class="required">*</span></label>
+                    {{ form.password1 }}
+                    {{ form.password1.errors }}
+                </div>
+
+                <div class="form-field{% if form.password2.errors %} has-error{% endif %}">
+                    <label for="{{ form.password2.id_for_label }}">Confirm password <span class="required">*</span></label>
+                    {{ form.password2 }}
+                    {{ form.password2.errors }}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Create customer account</button>
+                <a class="btn-secondary" href="{% url 'core:customer-login' %}">I already have an account</a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
