@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.db.models import Prefetch, Q
 from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView
@@ -143,6 +144,7 @@ class CustomerPasswordChangeView(CustomerAccessMixin, PasswordChangeView):
         return super().form_valid(form)
 
 
+@require_POST
 def user_logout_view(request):
     logout(request)
     return redirect("core:home")

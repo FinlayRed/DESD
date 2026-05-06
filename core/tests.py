@@ -169,7 +169,7 @@ class CustomerAuthTests(TestCase):
         )
         self.client.force_login(user)
 
-        response = self.client.get(reverse("core:customer-logout"))
+        response = self.client.post(reverse("core:customer-logout"))
 
         self.assertRedirects(response, reverse("core:home"))
         self.assertNotIn("_auth_user_id", self.client.session)

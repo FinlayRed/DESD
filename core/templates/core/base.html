@@ -16,6 +16,22 @@
         a {
             color: #1f4d3f;
         }
+        .inline-logout-form {
+            display: inline;
+            margin: 0;
+        }
+        .link-like {
+            font: inherit;
+            color: #1f4d3f;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .link-like:hover {
+            color: #174a3a;
+        }
         .site-header {
             background: #1f4d3f;
             color: #fff;
@@ -57,6 +73,22 @@
         }
         .top-nav form {
             margin: 0;
+            display: inline-flex;
+            align-items: center;
+        }
+        .site-header .top-nav button[type="submit"] {
+            font: inherit;
+            font-weight: 700;
+            color: inherit;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            border-radius: 6px;
+            padding: 0.3rem 0.65rem;
+            cursor: pointer;
+        }
+        .site-header .top-nav button[type="submit"]:hover {
+            text-decoration: underline;
+            border-color: #fff;
         }
         .top-nav .nav-user {
             font-weight: 700;
@@ -491,7 +523,10 @@
                     {% else %}
                         <a href="{% url 'core:customer-profile' %}">My profile</a>
                         <a href="{% url 'core:customer-orders' %}">My orders</a>
-                        <a href="{% url 'core:customer-logout' %}">Sign out</a>
+                        <form method="post" action="{% url 'core:customer-logout' %}">
+                            {% csrf_token %}
+                            <button type="submit">Log out</button>
+                        </form>
                     {% endif %}
                 {% else %}
                     <a href="{% url 'core:customer-login' %}">Customer login</a>
