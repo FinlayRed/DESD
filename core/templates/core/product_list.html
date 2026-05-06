@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<section class="grid three" style="margin-bottom: 1rem;">
+<section class="grid three stat-row">
     <article class="stat-card"><span class="eyebrow">Active</span><span class="stat-value">{{ active_count }}</span><p>Listings customers can order</p></article>
     <article class="stat-card"><span class="eyebrow">Inactive</span><span class="stat-value">{{ inactive_count }}</span><p>Paused or archived items</p></article>
     <article class="stat-card"><span class="eyebrow">Low stock</span><span class="stat-value">{{ low_stock_count }}</span><p>Products needing attention</p></article>
@@ -50,7 +50,7 @@
                         <tr>
                             <td>
                                 <strong>{{ product.name }}</strong>
-                                <p class="meta" style="margin: 0.35rem 0 0;">{{ product.price }}{% if product.seasonal_highlight %} · {{ product.seasonal_highlight }}{% endif %}</p>
+                                <p class="meta" style="margin: 0.35rem 0 0;">£{{ product.price }}{% if product.seasonal_highlight %} · {{ product.seasonal_highlight }}{% endif %}</p>
                             </td>
                             <td>{{ product.category|default:"-" }}</td>
                             <td>
@@ -66,7 +66,9 @@
                             </td>
                             <td>
                                 <span class="badge{% if product.is_low_stock %} warn{% endif %}">{{ product.stock_quantity }} in stock</span>
-                                <p class="meta" style="margin: 0.35rem 0 0;">{% if product.is_active %}Active{% else %}Inactive{% endif %}</p>
+                                {% if not product.is_active %}
+                                    <p class="meta" style="margin: 0.35rem 0 0;"><span class="badge alert">Paused</span></p>
+                                {% endif %}
                             </td>
                             <td>
                                 <div class="actions">

@@ -3,124 +3,113 @@
 {% block title %}Payment - Order #{{ order.id }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">Payment</h1>
-    <p class="lead">Complete your payment to confirm your order.</p>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer payment</div>
+        <h1>Payment for Order #{{ order.id }}</h1>
+        <p>Complete your payment to confirm your order.</p>
+    </div>
+    <div class="chip-row">
+        <a class="btn secondary" href="{% url 'core:checkout' %}">Back to Checkout</a>
+    </div>
 </div>
 
-<!-- Order Summary -->
-<div class="card" style="margin-top: 1rem;">
-    <h2 style="margin-top: 0;">Order #{{ order.id }}</h2>
-    
-    <table>
-        <tbody>
-            <tr>
-                <td>Order Date</td>
-                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
-            </tr>
+<article class="card stack">
+    <div class="section-title">
+        <div>
+            <h2>Order summary</h2>
+            <p class="meta">Placed on {{ order.created_at|date:"d M Y, H:i" }}</p>
+        </div>
+        <div class="chip-row">
             {% if order.collection_date %}
-            <tr>
-                <td>Collection Date</td>
-                <td style="text-align: right;">{{ order.collection_date|date:"D, d M Y" }}</td>
-            </tr>
+                <span class="badge">Collection {{ order.collection_date|date:"D, d M Y" }}</span>
             {% endif %}
             {% if order.delivery_postcode %}
-            <tr>
-                <td>Delivery Postcode</td>
-                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
-            </tr>
+                <span class="badge">{{ order.delivery_postcode }}</span>
             {% endif %}
-        </tbody>
-    </table>
-</div>
+        </div>
+    </div>
+</article>
 
-<!-- Items by Producer -->
 <div class="stack" style="margin-top: 1rem;">
     {% for producer_id, vendor in items_by_producer.items %}
-        <div class="card">
-            <h3 style="margin-top: 0;">{{ vendor.producer.business_name }}</h3>
-            <p class="lead">{{ vendor.producer.postcode }}</p>
+        <article class="card stack">
+            <div class="section-title">
+                <div>
+                    <h2>{{ vendor.producer.business_name }}</h2>
+                    <p class="meta">{{ vendor.producer.postcode }}</p>
+                </div>
+            </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in vendor.items %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ item.product.name }}</td>
-                            <td>{{ item.quantity }}</td>
-                            <td>£{{ item.price }}</td>
-                            <td>£{{ item.line_total }}</td>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
-                        <td><strong>£{{ vendor.subtotal }}</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        {% for item in vendor.items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>£{{ item.price }}</td>
+                                <td>£{{ item.line_total }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Supplier Subtotal</strong></td>
+                            <td><strong>£{{ vendor.subtotal }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </article>
     {% endfor %}
 </div>
 
-<!-- Payment Summary -->
-<div class="card" style="margin-top: 1rem;">
-    <h2 style="margin-top: 0;">Payment Summary</h2>
-    
-    <table>
-        <tbody>
-            <tr>
-                <td>Subtotal</td>
-                <td style="text-align: right;">£{{ payment.total_amount }}</td>
-            </tr>
-            <tr>
-                <td>Network Commission (5%)</td>
-                <td style="text-align: right;">£{{ payment.network_commission }}</td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr style="font-size: 1.2em;">
-                <td><strong>Total to Pay</strong></td>
-                <td style="text-align: right;"><strong>£{{ payment.total_amount }}</strong></td>
-            </tr>
-        </tfoot>
-    </table>
-    
-    <p class="lead" style="margin-top: 1rem;">
-        Producers will receive £{{ payment.producer_amount }} after network commission.
+<section class="grid three" style="margin-top: 1rem;">
+    <article class="stat-card">
+        <span class="eyebrow">Subtotal</span>
+        <span class="stat-value">£{{ payment.total_amount }}</span>
+        <p class="meta">Across all suppliers.</p>
+    </article>
+    <article class="stat-card">
+        <span class="eyebrow">Network commission</span>
+        <span class="stat-value">£{{ payment.network_commission }}</span>
+        <p class="meta">5% supports BRFN.</p>
+    </article>
+    <article class="stat-card">
+        <span class="eyebrow">Total to pay</span>
+        <span class="stat-value">£{{ payment.total_amount }}</span>
+        <p class="meta">Producers receive £{{ payment.producer_amount }}.</p>
+    </article>
+</section>
+
+<article class="card stack" style="margin-top: 1rem;">
+    <div class="section-title">
+        <div>
+            <h2>Card details</h2>
+            <p class="meta">Secure payment powered by Stripe.</p>
+        </div>
+        <div class="chip-row">
+            <span class="badge">Stripe (placeholder)</span>
+        </div>
+    </div>
+
+    <p class="meta">
+        The Stripe payment form will appear here when integration is complete. For demo and testing,
+        use the simulated payment button below to confirm a successful charge.
     </p>
-</div>
 
-<!-- Payment Form (Stripe Placeholder) -->
-<div class="card" style="margin-top: 1rem;">
-    <h2 style="margin-top: 0;">Card Details</h2>
-    
-    <div class="card" style="background: #f3f5f8; border-style: dashed;">
-        <p class="lead" style="margin: 0; text-align: center;">
-            <strong>Stripe Payment Integration</strong><br>
-            Payment form will appear here when Stripe is configured.<br>
-            For testing, use the "Simulate Payment" button below.
-        </p>
+    <div class="actions">
+        <a href="{% url 'core:payment-success' order_id=order.id %}" class="btn primary">Simulate Successful Payment</a>
+        <a href="{% url 'core:checkout' %}" class="btn secondary">Cancel</a>
     </div>
-    
-    <div class="actions" style="margin-top: 1rem; justify-content: center;">
-        <a href="{% url 'core:payment-success' order_id=order.id %}" class="btn primary">
-            Simulate Successful Payment
-        </a>
-    </div>
-</div>
-
-<!-- Actions -->
-<div class="card actions space-between" style="margin-top: 1rem;">
-    <a href="{% url 'core:checkout' %}" class="btn">Back to Checkout</a>
-    <span class="lead">Secure payment powered by Stripe</span>
-</div>
+</article>
 {% endblock %}

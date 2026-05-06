@@ -3,22 +3,20 @@
 {% block title %}Browse Local Produce{% endblock %}
 
 {% block content %}
-<div class="card stack">
+<div class="page-intro">
     <div>
-        <h1 style="margin-top: 0;">Browse Local Produce</h1>
-        <p class="lead">
-            Explore products by category, search quickly, and add items to your basket.
-        </p>
+        <div class="eyebrow">Customer browse</div>
+        <h1>Browse Local Produce</h1>
+        <p>Explore products by category, search quickly, and add items to your basket.</p>
     </div>
+    <div class="chip-row">
+        <a class="btn primary" href="{% url 'core:cart' %}">View Basket</a>
+    </div>
+</div>
 
-    <form method="get" class="actions">
-        <input
-            type="text"
-            name="q"
-            placeholder="Search products, farms, or categories"
-            value="{{ query }}"
-            style="min-width: 280px;"
-        >
+<article class="card">
+    <form method="get" class="filters">
+        <input type="text" name="q" placeholder="Search products, farms, or categories" value="{{ query }}">
         <select name="category">
             <option value="">All categories</option>
             {% for category_name in category_keys %}
@@ -28,89 +26,73 @@
             {% endfor %}
         </select>
         <button class="btn primary" type="submit">Search</button>
-        <a class="btn" href="{% url 'core:customer-product-list' %}">Clear</a>
+        <a class="btn secondary" href="{% url 'core:customer-product-list' %}">Clear</a>
     </form>
-</div>
+</article>
 
 <div class="stack" style="margin-top: 1rem;">
     {% for category_name, products_in_category in grouped_products.items %}
-        <div class="card">
-            <div class="actions space-between">
-                <h2 style="margin: 0;">{{ category_name|title }}</h2>
-                <span class="lead">{{ products_in_category|length }} item{{ products_in_category|pluralize }}</span>
+        <article class="card stack">
+            <div class="section-title">
+                <div>
+                    <h2>{{ category_name|title }}</h2>
+                    <p>{{ products_in_category|length }} item{{ products_in_category|pluralize }}</p>
+                </div>
             </div>
 
             {% if products_in_category %}
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Farm Origin</th>
-                        <th>Harvest / Availability</th>
-                        <th>Season Status</th>
-                        <th>Price</th>
-                        <th>Stock</th>
-                        <th>Basket</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for product in products_in_category %}
-                        <tr>
-                            <td>
-                                <strong>{{ product.name }}</strong><br>
-                                <span class="lead">{{ product.description|truncatechars:90 }}</span>
-                            </td>
-                            <td>
-                                {{ product.producer.business_name }}<br>
-                                <span class="lead">{{ product.producer.postcode }}</span>
-                            </td>
-                            <td>
-                                {% if product.available_from %}
-                                    {{ product.available_from }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                                to
-                                {% if product.available_to %}
-                                    {{ product.available_to }}
-                                {% else %}
-                                    ongoing
-                                {% endif %}
-                            </td>
-                            <td>{{ product.seasonal_status }}</td>
-                            <td>£{{ product.price }}</td>
-                            <td>{{ product.stock_quantity }}</td>
-                            <td>
-                                {% if product.stock_quantity > 0 %}
-                                    <form method="post" action="{% url 'core:cart-add' product.id %}" class="actions">
-                                        {% csrf_token %}
-                                        <input
-                                            type="number"
-                                            name="quantity"
-                                            value="{{ product.minimum_order_quantity }}"
-                                            min="{{ product.minimum_order_quantity }}"
-                                            max="{{ product.stock_quantity }}"
-                                            style="width: 5rem;"
-                                        >
-                                        <button class="btn primary" type="submit">Add</button>
-                                    </form>
-                                {% else %}
-                                    <span class="badge alert">Out of stock</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Farm Origin</th>
+                                <th>Harvest / Availability</th>
+                                <th>Season Status</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Basket</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for product in products_in_category %}
+                            <tr>
+                                <td>
+                                    <strong>{{ product.name }}</strong>
+                                    <p class="meta" style="margin: 0.3rem 0 0;">{{ product.description|truncatechars:90 }}</p>
+                                </td>
+                                <td>
+                                    {{ product.producer.business_name }}
+                                    <p class="meta" style="margin: 0.3rem 0 0;">{{ product.producer.postcode }}</p>
+                                </td>
+                                <td>
+                                    {% if product.available_from %}{{ product.available_from }}{% else %}N/A{% endif %}
+                                    to
+                                    {% if product.available_to %}{{ product.available_to }}{% else %}ongoing{% endif %}
+                                </td>
+                                <td><span class="badge">{{ product.seasonal_status }}</span></td>
+                                <td>£{{ product.price }}</td>
+                                <td>{{ product.stock_quantity }}</td>
+                                <td>
+                                    {% if product.stock_quantity > 0 %}
+                                        <form method="post" action="{% url 'core:cart-add' product.id %}" class="actions">
+                                            {% csrf_token %}
+                                            <input type="number" name="quantity" value="{{ product.minimum_order_quantity }}" min="{{ product.minimum_order_quantity }}" max="{{ product.stock_quantity }}" style="width: 5rem;">
+                                            <button class="btn primary" type="submit">Add</button>
+                                        </form>
+                                    {% else %}
+                                        <span class="badge alert">Out of stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
-                <p class="lead">No products currently listed in this category.</p>
+                <p class="empty-state">No products currently listed in this category.</p>
             {% endif %}
-        </div>
+        </article>
     {% endfor %}
-
-    <div class="card actions space-between">
-        <span class="lead">Ready to review your selected items?</span>
-        <a class="btn primary" href="{% url 'core:cart' %}">View Basket</a>
-    </div>
 </div>
 {% endblock %}

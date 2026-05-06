@@ -18,7 +18,7 @@
 <section class="grid three">
     <article class="stat-card"><span class="eyebrow">Products</span><span class="stat-value">{{ product_count }}</span><p>{{ active_product_count }} active listings</p></article>
     <article class="stat-card"><span class="eyebrow">Orders</span><span class="stat-value">{{ incoming_order_count }}</span><p>Total Orders</p></article>
-    <article class="stat-card"><span class="eyebrow">Surplus Notificaitons</span><span class="stat-value">{{ surplus_count }}</span><p>Active surplus offers</p></article>
+    <article class="stat-card"><span class="eyebrow">Surplus notifications</span><span class="stat-value">{{ surplus_count }}</span><p>Active surplus offers</p></article>
 </section>
 
 <section class="grid two" style="margin-top: 1rem;">
@@ -26,7 +26,7 @@
         <div class="section-title">
             <div>
                 <h2>Incoming orders</h2>
-                <p>Items that are yet to be furfilled</p>
+                <p>Items that are yet to be fulfilled</p>
             </div>
             <a href="{% url 'core:order-list' %}" class="btn secondary">View all orders</a>
         </div>
@@ -57,7 +57,7 @@
         <div class="section-title">
             <div>
                 <h2>Weekly settlements</h2>
-                <p>Settlements with commisions calculated</p>
+                <p>Settlements with commissions calculated</p>
             </div>
             <a href="{% url 'core:settlement-list' %}" class="btn secondary">Settlement history</a>
         </div>

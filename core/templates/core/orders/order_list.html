@@ -3,62 +3,57 @@
 {% block title %}My Orders{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">My Orders</h1>
-    <p class="lead">View your order history and track current orders.</p>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer orders</div>
+        <h1>My Orders</h1>
+        <p>View your order history and track current orders.</p>
+    </div>
+    <div class="chip-row">
+        <a class="btn secondary" href="{% url 'core:customer-product-list' %}">Continue Shopping</a>
+    </div>
 </div>
 
 {% if orders %}
-    <div class="stack" style="margin-top: 1rem;">
+    <div class="stack">
         {% for order in orders %}
-            <div class="card">
-                <div class="actions space-between" style="margin-bottom: 0.75rem;">
-                    <h3 style="margin: 0;">Order #{{ order.id }}</h3>
-                    <span class="badge 
-                        {% if order.status == 'pending' %}badge-pending
-                        {% elif order.status == 'confirmed' %}badge-confirmed
-                        {% elif order.status == 'processing' %}badge-processing
-                        {% elif order.status == 'ready' %}badge-ready
-                        {% elif order.status == 'delivered' %}badge-delivered
-                        {% elif order.status == 'cancelled' %}badge-cancelled
-                        {% endif %}">
-                        {{ order.get_status_display }}
-                    </span>
-                </div>
-                
-                <table>
-                    <tbody>
-                        <tr>
-                            <td class="lead">Order Date</td>
-                            <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
-                        </tr>
+            <article class="card stack">
+                <div class="section-title">
+                    <div>
+                        <h2>Order #{{ order.id }}</h2>
+                        <p class="meta">{{ order.created_at|date:"d M Y, H:i" }}</p>
+                    </div>
+                    <div class="chip-row">
+                        <span class="badge">{{ order.get_status_display }}</span>
                         {% if order.collection_date %}
-                        <tr>
-                            <td class="lead">Collection Date</td>
-                            <td style="text-align: right;">{{ order.collection_date|date:"D, d M Y" }}</td>
-                        </tr>
+                            <span class="badge">Collection {{ order.collection_date|date:"D, d M Y" }}</span>
                         {% endif %}
-                        <tr>
-                            <td class="lead">Items</td>
-                            <td style="text-align: right;">{{ order.items.count }} item{{ order.items.count|pluralize }}</td>
-                        </tr>
-                        <tr>
-                            <td class="lead">Total</td>
-                            <td style="text-align: right;"><strong>£{{ order.total_amount }}</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <div class="actions" style="margin-top: 0.75rem;">
-                    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary small">View Details</a>
+                    </div>
                 </div>
-            </div>
+
+                <ul class="list-reset">
+                    <li class="list-item">
+                        <strong>Items</strong>
+                        <p class="meta" style="margin: 0.3rem 0 0;">{{ order.items.count }} item{{ order.items.count|pluralize }} across this order.</p>
+                    </li>
+                    <li class="list-item">
+                        <strong>Order total</strong>
+                        <p class="meta" style="margin: 0.3rem 0 0;">£{{ order.total_amount }}</p>
+                    </li>
+                </ul>
+
+                <div class="actions">
+                    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary">View Details</a>
+                </div>
+            </article>
         {% endfor %}
     </div>
 {% else %}
-    <div class="card" style="margin-top: 1rem;">
-        <p class="lead">You haven't placed any orders yet.</p>
-        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
-    </div>
+    <article class="card stack">
+        <p class="empty-state">You haven't placed any orders yet.</p>
+        <div class="actions">
+            <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
+        </div>
+    </article>
 {% endif %}
 {% endblock %}
