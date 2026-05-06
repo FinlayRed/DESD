@@ -30,9 +30,9 @@
                         <tr>
                             <td>{{ settlement.week_start }} to {{ settlement.week_end }}</td>
                             <td><span class="badge">{{ settlement.get_status_display }}</span></td>
-                            <td>{{ settlement.gross_amount }}</td>
-                            <td>{{ settlement.commission_amount }}</td>
-                            <td>{{ settlement.net_amount }}</td>
+                            <td>£{{ settlement.gross_amount }}</td>
+                            <td>£{{ settlement.commission_amount }}</td>
+                            <td>£{{ settlement.net_amount }}</td>
                             <td>
                                 <a href="{% url 'core:settlement-detail' settlement.pk %}" class="btn">View audit trail</a>
                                 <a href="{% url 'core:settlement-export' settlement.pk %}" class="btn secondary">Export CSV</a>

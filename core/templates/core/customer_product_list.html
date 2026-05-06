@@ -91,11 +91,14 @@
                                     <tr>
                                         <td>
                                             <strong>{{ product.name }}</strong>
-                                            {% if product.organic %}
-                                                <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
-                                            {% endif %}
-                                            <p class="meta" style="margin: 0.3rem 0 0;">{{ product.description|truncatechars:90 }}</p>
-                                        </td>
+                                             {% if product.organic %}
+                                                 <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                             {% endif %}
+                                             {% if product.active_surplus_discount %}
+                                                 <span class="badge alert" style="margin-left: 0.35rem;">Surplus deal -{{ product.active_surplus_discount }}%</span>
+                                             {% endif %}
+                                             <p class="meta" style="margin: 0.3rem 0 0;">{{ product.description|truncatechars:90 }}</p>
+                                         </td>
                                         <td>
                                             {{ product.producer.business_name }}
                                             <p class="meta" style="margin: 0.3rem 0 0;">{{ product.producer.postcode }}</p>
@@ -116,7 +119,14 @@
                                                 <span class="meta">None stated</span>
                                             {% endif %}
                                         </td>
-                                        <td>£{{ product.price }}</td>
+                                        <td>
+                                            {% if product.active_surplus_price %}
+                                                <span class="meta"><s>£{{ product.price }}</s></span><br>
+                                                <strong>£{{ product.active_surplus_price }}</strong>
+                                            {% else %}
+                                                £{{ product.price }}
+                                            {% endif %}
+                                        </td>
                                         <td>{{ product.stock_quantity }}</td>
                                         <td>
                                             {% if product.stock_quantity > 0 %}

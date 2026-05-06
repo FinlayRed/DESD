@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
-from django.db.models import Prefetch, Q
+from django.db.models import OuterRef, Prefetch, Q, Subquery
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.http import require_POST
@@ -582,8 +582,17 @@ class CustomerProductBrowseView(ListView):
     UNCATEGORISED_LABEL = "Uncategorised"
 
     def get_queryset(self):
+        active_surplus = SurplusListing.objects.filter(
+            product=OuterRef("pk"),
+            is_active=True,
+            available_until__gte=timezone.now(),
+        ).order_by("available_until")
         queryset = (
             Product.objects.filter(is_active=True)
+            .annotate(
+                active_surplus_discount=Subquery(active_surplus.values("discount_percent")[:1]),
+                active_surplus_price=Subquery(active_surplus.values("discounted_price")[:1]),
+            )
             .select_related("producer", "category")
             .order_by("name")
         )

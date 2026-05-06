@@ -538,6 +538,23 @@ class CustomerProductFilterDisplayTests(ProducerFeatureBase):
         response = self.client.get(reverse("core:customer-product-list"))
         self.assertContains(response, "None stated", count=2)
 
+    def test_active_surplus_listing_shows_discount_indicator_on_browse(self):
+        SurplusListing.objects.create(
+            producer=self.producer,
+            product=self.product,
+            quantity=3,
+            original_price=Decimal("1.99"),
+            discount_percent=25,
+            discounted_price=Decimal("1.49"),
+            available_until=timezone.now() + timedelta(days=1),
+            is_active=True,
+        )
+
+        response = self.client.get(reverse("core:customer-product-list"))
+
+        self.assertContains(response, "Surplus deal -25%")
+        self.assertContains(response, "£1.49")
+
     def test_browse_empty_state_when_search_matches_nothing(self):
         url = reverse("core:customer-product-list")
         response = self.client.get(url, {"q": "nonexistentproductxyz123"})
@@ -882,10 +899,18 @@ class SeedDemoDataCommandTests(TestCase):
 
         self.assertIn("Demo data created successfully", out.getvalue())
         self.assertEqual(Producer.objects.count(), 3)
-        self.assertEqual(Product.objects.count(), 6)
-        self.assertEqual(Order.objects.count(), 3)
-        self.assertEqual(Payment.objects.count(), 3)
-        self.assertEqual(TraceabilityRecord.objects.count(), OrderItem.objects.count())
+        self.assertEqual(Product.objects.count(), 10)
+        self.assertEqual(Order.objects.count(), 5)
+        self.assertEqual(Payment.objects.count(), 5)
+        self.assertTrue(Product.objects.filter(name="Free Range Eggs (6 pack)", stock_quantity=5).exists())
+        self.assertTrue(Product.objects.filter(name="Seeded Breakfast Rolls", is_active=False).exists())
+        self.assertTrue(SurplusListing.objects.filter(product__name="Organic Tomatoes", is_active=True).exists())
+        self.assertEqual(ProducerContent.objects.count(), 2)
+        self.assertTrue(Order.objects.filter(reference="ORD-00004", paid=False, payment__status=Payment.STATUS_PENDING).exists())
+        self.assertTrue(Order.objects.filter(reference="ORD-00005", items__status=OrderItem.STATUS_READY).exists())
+        paid_item_count = OrderItem.objects.filter(order__paid=True).count()
+        self.assertEqual(TraceabilityRecord.objects.count(), paid_item_count)
+        self.assertGreater(ProducerSettlement.objects.count(), 0)
 
 
 class SettlementTests(ProducerFeatureBase):
@@ -911,9 +936,9 @@ class SettlementTests(ProducerFeatureBase):
         self.assertEqual(settlement.gross_amount, Decimal("10.00"))
         self.assertEqual(settlement.commission_amount, Decimal("0.50"))
         self.assertEqual(settlement.net_amount, Decimal("9.50"))
-        self.assertContains(response, "10.00")
-        self.assertContains(response, "0.50")
-        self.assertContains(response, "9.50")
+        self.assertContains(response, "£10.00")
+        self.assertContains(response, "£0.50")
+        self.assertContains(response, "£9.50")
 
     def test_producer_can_export_settlement_csv(self):
         order = Order.objects.create(

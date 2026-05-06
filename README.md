@@ -70,6 +70,12 @@ Seed demo data:
 docker compose exec web python manage.py seed_demo_data
 ```
 
+Manual testing flow for the seeded data:
+
+```text
+docs/manual-testing-flow.md
+```
+
 Run tests:
 
 ```bash

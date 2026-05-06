@@ -12,15 +12,15 @@
     <div class="chip-row">
         <a class="btn" href="{% url 'core:settlement-export' settlement.pk %}">Export CSV</a>
         <span class="badge">{{ settlement.get_status_display }}</span>
-        <span class="badge">Gross {{ settlement.gross_amount }}</span>
-        <span class="badge">Net {{ settlement.net_amount }}</span>
+        <span class="badge">Gross £{{ settlement.gross_amount }}</span>
+        <span class="badge">Net £{{ settlement.net_amount }}</span>
     </div>
 </div>
 
 <section class="grid three" style="margin-bottom: 1rem;">
-    <article class="stat-card"><span class="eyebrow">Gross</span><span class="stat-value">{{ settlement.gross_amount }}</span><p>Total paid order value</p></article>
-    <article class="stat-card"><span class="eyebrow">Commission</span><span class="stat-value">{{ settlement.commission_amount }}</span><p>5% network fee</p></article>
-    <article class="stat-card"><span class="eyebrow">Net</span><span class="stat-value">{{ settlement.net_amount }}</span><p>Producer settlement amount</p></article>
+    <article class="stat-card"><span class="eyebrow">Gross</span><span class="stat-value">£{{ settlement.gross_amount }}</span><p>Total paid order value</p></article>
+    <article class="stat-card"><span class="eyebrow">Commission</span><span class="stat-value">£{{ settlement.commission_amount }}</span><p>5% network fee</p></article>
+    <article class="stat-card"><span class="eyebrow">Net</span><span class="stat-value">£{{ settlement.net_amount }}</span><p>Producer settlement amount</p></article>
 </section>
 
 <div class="card">
@@ -42,9 +42,9 @@
                         <td>{{ entry.order_item.order.reference }}</td>
                         <td>{{ entry.order_item.product.name }}</td>
                         <td>{{ entry.order_item.quantity }}</td>
-                        <td>{{ entry.gross_amount }}</td>
-                        <td>{{ entry.commission_amount }}</td>
-                        <td>{{ entry.net_amount }}</td>
+                        <td>£{{ entry.gross_amount }}</td>
+                        <td>£{{ entry.commission_amount }}</td>
+                        <td>£{{ entry.net_amount }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

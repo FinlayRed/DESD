@@ -18,10 +18,13 @@ from core.models import (
     OrderItem,
     Payment,
     Producer,
+    ProducerContent,
     Product,
+    SurplusListing,
     TraceabilityRecord,
 )
 from core.payment_service import process_order_payment
+from core.services import sync_producer_settlements
 from core.traceability import create_traceability_records
 
 User = get_user_model()
@@ -37,6 +40,7 @@ class Command(BaseCommand):
         veg, _ = Category.objects.get_or_create(name="Vegetables", defaults={"description": "Fresh local vegetables"})
         dairy, _ = Category.objects.get_or_create(name="Dairy & Eggs", defaults={"description": "Milk, cheese, eggs and more"})
         bakery, _ = Category.objects.get_or_create(name="Bakery", defaults={"description": "Fresh bread and baked goods"})
+        pantry, _ = Category.objects.get_or_create(name="Pantry", defaults={"description": "Preserves, grains and store cupboard staples"})
 
         # ---- Producer 1: Bristol Valley Farm ----
         user1, created = User.objects.get_or_create(
@@ -143,6 +147,57 @@ class Command(BaseCommand):
                 "harvest_date": timezone.now().date(),
                 "best_before_date": timezone.now().date() + timedelta(days=3),
                 "is_active": True,
+            },
+        )
+        eggs, _ = Product.objects.get_or_create(
+            producer=producer2, name="Free Range Eggs (6 pack)",
+            defaults={
+                "category": dairy, "description": "Mixed-size eggs from pasture-raised hens",
+                "price": Decimal("2.90"), "stock_quantity": 5, "organic": False,
+                "allergen_info": "Contains: Eggs", "farm_origin": "Hillside Dairy",
+                "harvest_date": timezone.now().date() - timedelta(days=1),
+                "best_before_date": timezone.now().date() + timedelta(days=21),
+                "seasonal_highlight": "Low stock",
+                "storage_guidance": "Keep refrigerated after purchase.",
+                "is_active": True,
+            },
+        )
+        jam, _ = Product.objects.get_or_create(
+            producer=producer1, name="Blackcurrant Jam",
+            defaults={
+                "category": pantry, "description": "Small-batch blackcurrant jam made with surplus summer fruit",
+                "price": Decimal("3.75"), "stock_quantity": 25, "organic": True,
+                "allergen_info": "No declared allergens", "farm_origin": "Bristol Valley Farm",
+                "available_from": timezone.now().date() - timedelta(days=30),
+                "available_to": timezone.now().date() + timedelta(days=180),
+                "best_before_date": timezone.now().date() + timedelta(days=365),
+                "seasonal_highlight": "Preserved summer crop",
+                "storage_guidance": "Refrigerate after opening and use within four weeks.",
+                "is_active": True,
+            },
+        )
+        asparagus, _ = Product.objects.get_or_create(
+            producer=producer1, name="Early Season Asparagus",
+            defaults={
+                "category": veg, "description": "Preview listing for the first asparagus cut of the season",
+                "price": Decimal("4.25"), "stock_quantity": 12, "organic": True,
+                "allergen_info": "No declared allergens", "farm_origin": "Bristol Valley Farm",
+                "available_from": timezone.now().date() + timedelta(days=14),
+                "available_to": timezone.now().date() + timedelta(days=45),
+                "harvest_date": timezone.now().date() + timedelta(days=14),
+                "best_before_date": timezone.now().date() + timedelta(days=21),
+                "seasonal_highlight": "Upcoming season",
+                "storage_guidance": "Stand spears in a little water and chill.",
+                "is_active": True,
+            },
+        )
+        paused_rolls, _ = Product.objects.get_or_create(
+            producer=producer3, name="Seeded Breakfast Rolls",
+            defaults={
+                "category": bakery, "description": "Paused listing used to test inactive producer products",
+                "price": Decimal("3.20"), "stock_quantity": 0, "organic": False,
+                "allergen_info": "Contains: Wheat (Gluten), Sesame", "farm_origin": "Sunrise Bakery",
+                "is_active": False,
             },
         )
 
@@ -273,13 +328,130 @@ class Command(BaseCommand):
                 f"  Order 3 (single producer): £{4.00 + 4.50:.2f} – Sunrise Bakery"
             ))
 
+        # =============================================
+        # ORDER 4: Pending payment checkout
+        # Helena has reached the payment page but not completed payment.
+        # =============================================
+        cust3, created = User.objects.get_or_create(
+            username="helena.okafor@email.com",
+            defaults={"email": "helena.okafor@email.com", "first_name": "Helena", "last_name": "Okafor"},
+        )
+        if created:
+            cust3.set_password("TestPass123!")
+            cust3.save()
+
+        order4, o4_created = Order.objects.get_or_create(
+            customer=cust3,
+            reference="ORD-00004",
+            defaults={
+                "status": Order.STATUS_PENDING,
+                "delivery_method": Order.DELIVERY_COLLECTION,
+                "customer_name": "Helena Okafor",
+                "customer_email": "helena.okafor@email.com",
+                "delivery_postcode": "BS6 7AA",
+                "delivery_address": "Collection from Bristol community hub",
+                "fulfilment_date": timezone.now().date() + timedelta(days=3),
+                "collection_date": timezone.now().date() + timedelta(days=3),
+                "notes": "Manual test: complete payment from the payment page.",
+                "paid": False,
+            },
+        )
+        if o4_created:
+            OrderItem.objects.create(order=order4, product=eggs, quantity=1, price=eggs.price)
+            OrderItem.objects.create(order=order4, product=jam, quantity=2, price=jam.price)
+            Payment.objects.create(
+                order=order4,
+                total_amount=eggs.price + (jam.price * 2),
+                network_commission=((eggs.price + (jam.price * 2)) * Decimal("0.05")).quantize(Decimal("0.01")),
+                producer_amount=((eggs.price + (jam.price * 2)) * Decimal("0.95")).quantize(Decimal("0.01")),
+                status=Payment.STATUS_PENDING,
+            )
+            self.stdout.write(self.style.SUCCESS("  Order 4 (pending payment): Helena checkout in progress"))
+
+        # =============================================
+        # ORDER 5: Mixed producer workflow statuses
+        # Tests customer progress rollup and producer order filters.
+        # =============================================
+        order5, o5_created = Order.objects.get_or_create(
+            customer=cust2,
+            reference="ORD-00005",
+            defaults={
+                "status": Order.STATUS_CONFIRMED,
+                "delivery_method": Order.DELIVERY_DELIVERY,
+                "customer_name": "Sarah Williams",
+                "customer_email": "sarah.williams@email.com",
+                "delivery_postcode": "BS9 3AA",
+                "delivery_address": "44 Henleaze Road, Bristol",
+                "fulfilment_date": timezone.now().date() + timedelta(days=2),
+                "notes": "Manual test: producer line items intentionally have different statuses.",
+                "paid": False,
+            },
+        )
+        if o5_created:
+            OrderItem.objects.create(order=order5, product=tomatoes, quantity=1, price=tomatoes.price, status=OrderItem.STATUS_ACCEPTED)
+            OrderItem.objects.create(order=order5, product=eggs, quantity=2, price=eggs.price, status=OrderItem.STATUS_PREPARING)
+            OrderItem.objects.create(order=order5, product=sourdough, quantity=1, price=sourdough.price, status=OrderItem.STATUS_READY)
+            process_order_payment(order5)
+            create_traceability_records(order5)
+            self.stdout.write(self.style.SUCCESS("  Order 5 (mixed statuses): accepted/preparing/ready across 3 producers"))
+
+        # ---- Surplus listings and producer content ----
+        surplus_price = (tomatoes.price * Decimal("0.70")).quantize(Decimal("0.01"))
+        SurplusListing.objects.update_or_create(
+            producer=producer1,
+            product=tomatoes,
+            defaults={
+                "quantity": 6,
+                "original_price": tomatoes.price,
+                "discount_percent": 30,
+                "discounted_price": surplus_price,
+                "available_until": timezone.now() + timedelta(days=2),
+                "note": "Manual test surplus listing: ripe tomatoes for quick sale.",
+                "is_active": True,
+            },
+        )
+        ProducerContent.objects.update_or_create(
+            producer=producer1,
+            title="Roasted tomato freezer sauce",
+            defaults={
+                "product": tomatoes,
+                "content_type": ProducerContent.TYPE_RECIPE,
+                "season": "Spring",
+                "summary": "A simple sauce for using ripe tomatoes before they soften.",
+                "body": "Halve tomatoes, roast low with oil and garlic, then freeze in portions.",
+                "is_published": True,
+            },
+        )
+        ProducerContent.objects.update_or_create(
+            producer=producer3,
+            title="Keeping sourdough fresh",
+            defaults={
+                "product": sourdough,
+                "content_type": ProducerContent.TYPE_STORAGE,
+                "season": "Year-round",
+                "summary": "Keep the cut side covered and freeze slices if needed.",
+                "body": "Store sourdough in paper at room temperature. Slice and freeze anything not eaten within two days.",
+                "is_published": True,
+            },
+        )
+
+        # Generate settlement rows for paid seeded orders so the settlement screens have data immediately.
+        for producer in (producer1, producer2, producer3):
+            sync_producer_settlements(producer)
+
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS("Demo data created successfully!"))
         self.stdout.write("")
         self.stdout.write("Summary:")
         self.stdout.write(f"  Producers: 3")
-        self.stdout.write(f"  Products:  6")
-        self.stdout.write(f"  Customers: 2")
-        self.stdout.write(f"  Orders:    3 (all paid with traceability records)")
+        self.stdout.write(f"  Products:  10")
+        self.stdout.write(f"  Customers: 3")
+        self.stdout.write(f"  Orders:    5 (4 paid with traceability records, 1 pending payment)")
+        self.stdout.write(f"  Surplus listings: 1")
+        self.stdout.write(f"  Producer content: 2")
+        self.stdout.write("")
+        self.stdout.write("Test logins: all seeded users use password TestPass123!")
+        self.stdout.write("  Producers: jane@bristolvalleyfarm.com, tom@hillsidedairy.com, amy@sunrisebakery.com")
+        self.stdout.write("  Customers: robert.johnson@email.com, sarah.williams@email.com, helena.okafor@email.com")
         self.stdout.write("")
         self.stdout.write("Visit /admin-reports/ to see the data in your financial dashboard.")

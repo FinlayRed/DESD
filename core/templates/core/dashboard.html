@@ -69,7 +69,7 @@
                         <div class="actions" style="justify-content: space-between; align-items: flex-start;">
                             <div>
                                 <strong>Week of {{ settlement.week_start }}</strong>
-                                <p class="meta" style="margin: 0.3rem 0 0;">Gross {{ settlement.gross_amount }} · Commission {{ settlement.commission_amount }} · Net {{ settlement.net_amount }}</p>
+                                <p class="meta" style="margin: 0.3rem 0 0;">Gross £{{ settlement.gross_amount }} · Commission £{{ settlement.commission_amount }} · Net £{{ settlement.net_amount }}</p>
                             </div>
                             <a href="{% url 'core:settlement-detail' settlement.pk %}" class="btn">Open</a>
                         </div>
