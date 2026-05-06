@@ -1,6 +1,6 @@
 # DESD Django Project
 
-This is the DESD project repository. It is a Django app that can run with Docker Compose
+This is the DESD project repository. It is a Django app that runs with Docker Compose behind an Nginx reverse proxy.
 
 ## Requirements
 
@@ -26,7 +26,7 @@ The default `.env.example` values are suitable for local Docker development.
 
 ## Start With Docker
 
-Docker is the recommended way to run the project because it starts Django, PostgreSQL, and Nginx together.
+Docker is the recommended way to run the project because it starts Django, PostgreSQL, and Nginx together. Nginx is the public entry point on port `8000` and proxies requests to the internal Django/Gunicorn service.
 
 ```bash
 docker compose up --build
@@ -40,8 +40,8 @@ http://127.0.0.1:8000/
 
 Docker starts these services:
 
-- `nginx`: public web server and reverse proxy
-- `web`: Django application served with Gunicorn
+- `nginx`: public web server and reverse proxy, exposed at `http://127.0.0.1:8000/`
+- `web`: internal Django application served with Gunicorn on port `8000`
 - `db`: PostgreSQL database
 
 Stop the project with:
@@ -93,3 +93,7 @@ The project reads environment variables from `.env` when using Docker Compose.
 - `DB_NAME`: PostgreSQL database name
 - `DB_USER`: PostgreSQL username
 - `DB_PASS`: PostgreSQL password
+
+## Nginx Configuration
+
+The Nginx configuration lives in `nginx/default.conf`. Docker Compose mounts it into the `nginx` container and forwards all requests to the `web` service.
