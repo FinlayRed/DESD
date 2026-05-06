@@ -1,6 +1,6 @@
 {% extends "core/base.html" %}
 
-{% block title %}Order Confirmed - #{{ order.id }}{% endblock %}
+{% block title %}Order Confirmed - {{ order.reference|default:order.id }}{% endblock %}
 
 {% block content %}
 <div class="card" style="text-align: center;">
@@ -10,7 +10,7 @@
 </div>
 
 <div class="card" style="margin-top: 1rem;">
-    <h2 style="margin-top: 0;">Order #{{ order.id }}</h2>
+    <h2 style="margin-top: 0;">{{ order.reference|default:order.id }}</h2>
     
     <table>
         <tbody>

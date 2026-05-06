@@ -136,16 +136,19 @@ def sync_producer_settlements(producer):
         commission_amount = calculate_commission(gross_amount)
         net_amount = (gross_amount - commission_amount).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
 
-        SettlementEntry.objects.create(
-            settlement=settlement,
+        entry, _ = SettlementEntry.objects.get_or_create(
             order_item=item,
-            gross_amount=gross_amount,
-            commission_amount=commission_amount,
-            net_amount=net_amount,
+            defaults={
+                "settlement": settlement,
+                "gross_amount": gross_amount,
+                "commission_amount": commission_amount,
+                "net_amount": net_amount,
+            },
         )
-        item.settlement = settlement
-        item.save(update_fields=["settlement"])
-        touched_ids.add(settlement.pk)
+        if item.settlement_id != entry.settlement_id:
+            item.settlement = entry.settlement
+            item.save(update_fields=["settlement"])
+        touched_ids.add(entry.settlement_id)
 
     settlements = ProducerSettlement.objects.filter(producer=producer)
     for settlement in settlements:

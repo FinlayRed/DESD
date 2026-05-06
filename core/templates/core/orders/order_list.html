@@ -20,7 +20,7 @@
             <article class="card stack">
                 <div class="section-title">
                     <div>
-                        <h2>Order #{{ order.id }}</h2>
+                        <h2>{{ order.reference|default:order.id }}</h2>
                         <p class="meta">{{ order.created_at|date:"d M Y, H:i" }}</p>
                     </div>
                     <div class="chip-row">

@@ -1,12 +1,12 @@
 {% extends "core/base.html" %}
 
-{% block title %}Order #{{ order.id }}{% endblock %}
+{% block title %}{{ order.reference|default:order.id }}{% endblock %}
 
 {% block content %}
 <div class="page-intro">
     <div>
         <div class="eyebrow">Customer order</div>
-        <h1>Order #{{ order.id }}</h1>
+        <h1>{{ order.reference|default:order.id }}</h1>
         <p>Placed on {{ order.created_at|date:"d M Y, H:i" }}.</p>
     </div>
     <div class="chip-row">
