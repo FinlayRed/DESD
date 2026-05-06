@@ -1,141 +1,136 @@
 {% extends "core/base.html" %}
 
-{% block title %}Order #{{ order.id }}{% endblock %}
+{% block title %}{{ order.reference|default:order.id }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="actions space-between">
-        <h1 style="margin: 0;">Order #{{ order.id }}</h1>
-        <span class="badge 
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer order</div>
+        <h1>{{ order.reference|default:order.id }}</h1>
+        <p>Placed on {{ order.created_at|date:"d M Y, H:i" }}.</p>
+    </div>
+    <div class="chip-row">
+        <span class="badge
             {% if order.customer_progress_badge_key == 'pending' %}badge-pending
             {% elif order.customer_progress_badge_key == 'confirmed' %}badge-confirmed
             {% elif order.customer_progress_badge_key == 'processing' %}badge-processing
             {% elif order.customer_progress_badge_key == 'ready' %}badge-ready
             {% elif order.customer_progress_badge_key == 'delivered' %}badge-delivered
             {% elif order.customer_progress_badge_key == 'cancelled' %}badge-cancelled
-            {% endif %}" style="font-size: 1rem;">
+            {% endif %}">
             {{ order.get_customer_progress_display }}
         </span>
     </div>
 </div>
 
-<!-- Order Info -->
-<div class="card" style="margin-top: 1rem;">
-    <h2 style="margin-top: 0;">Order Information</h2>
-    
-    <table>
-        <tbody>
-            <tr>
-                <td>Order Date</td>
-                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
-            </tr>
-            {% if order.collection_date %}
-            <tr>
-                <td>Collection Date</td>
-                <td style="text-align: right;"><strong>{{ order.collection_date|date:"D, d M Y" }}</strong></td>
-            </tr>
-            {% endif %}
-            {% if order.delivery_postcode %}
-            <tr>
-                <td>Delivery Postcode</td>
-                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
-            </tr>
-            {% endif %}
-            {% if order.delivery_address %}
-            <tr>
-                <td>Delivery Address</td>
-                <td style="text-align: right;">{{ order.delivery_address }}</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</div>
+<article class="card stack">
+    <div class="section-title">
+        <div>
+            <h2>Order information</h2>
+            <p class="meta">Delivery and collection details for this order.</p>
+        </div>
+    </div>
 
-<!-- Items by Producer -->
+    <ul class="list-reset">
+        <li class="list-item">
+            <strong>Order date</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.created_at|date:"d M Y, H:i" }}</p>
+        </li>
+        {% if order.collection_date %}
+        <li class="list-item">
+            <strong>Collection date</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.collection_date|date:"D, d M Y" }}</p>
+        </li>
+        {% endif %}
+        {% if order.delivery_postcode %}
+        <li class="list-item">
+            <strong>Delivery postcode</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.delivery_postcode }}</p>
+        </li>
+        {% endif %}
+        {% if order.delivery_address %}
+        <li class="list-item">
+            <strong>Delivery address</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.delivery_address }}</p>
+        </li>
+        {% endif %}
+    </ul>
+</article>
+
 <div class="stack" style="margin-top: 1rem;">
     {% for producer_id, vendor in items_by_producer.items %}
-        <div class="card">
-            <h3 style="margin-top: 0;">{{ vendor.producer.business_name }}</h3>
-            <p class="lead">{{ vendor.producer.postcode }} 
-                {% if vendor.producer.organic %}
-                    <span class="badge badge-confirmed">Organic Producer</span>
-                {% endif %}
-            </p>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in vendor.items %}
-                        <tr>
-                            <td>
-                                <strong>{{ item.product.name }}</strong>
-                                {% if item.product.organic %}
-                                    <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
-                                {% endif %}
-                                {% if item.product.allergen_info %}
-                                    <br><small class="lead">Allergens: {{ item.product.allergen_info }}</small>
-                                {% endif %}
-                            </td>
-                            <td>{{ item.quantity }}</td>
-                            <td>£{{ item.price }}</td>
-                            <td>£{{ item.line_total }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
-                        <td><strong>£{{ vendor.subtotal }}</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
-
-            <div class="card" style="margin-top: 0.85rem; background: #fbfcfd;">
-                <h4 style="margin-top: 0;">Collection Details</h4>
-                <p class="lead" style="margin-bottom: 0;">
-                    Contact this producer directly to arrange collection or delivery.
-                </p>
+        <article class="card stack">
+            <div class="section-title">
+                <div>
+                    <h2>{{ vendor.producer.business_name }}</h2>
+                    <p class="meta">{{ vendor.producer.postcode }}</p>
+                </div>
+                <div class="chip-row">
+                    {% if vendor.producer.organic %}
+                        <span class="badge badge-organic">Organic producer</span>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in vendor.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong>
+                                    {% if item.product.organic %}
+                                        <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                    {% endif %}
+                                    {% if item.product.allergen_info %}
+                                        <p class="meta" style="margin: 0.3rem 0 0;"><strong>Allergens:</strong> {{ item.product.allergen_info }}</p>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>£{{ item.price }}</td>
+                                <td>£{{ item.line_total }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Supplier Subtotal</strong></td>
+                            <td><strong>£{{ vendor.subtotal }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <p class="meta">Contact this producer directly to arrange collection or delivery.</p>
+        </article>
     {% endfor %}
 </div>
 
-<!-- Order Total -->
-<div class="card" style="margin-top: 1rem;">
-    <h2 style="margin-top: 0;">Order Total</h2>
-    
-    <table>
-        <tbody>
-            <tr>
-                <td>Subtotal</td>
-                <td style="text-align: right;">£{{ order.total_amount }}</td>
-            </tr>
-            {% if order.payment %}
-            <tr>
-                <td>Network Commission (5%)</td>
-                <td style="text-align: right;">£{{ order.payment.network_commission }}</td>
-            </tr>
-            {% endif %}
-        </tbody>
-        <tfoot>
-            <tr style="font-size: 1.1em;">
-                <td><strong>Total Paid</strong></td>
-                <td style="text-align: right;"><strong>£{{ order.total_amount }}</strong></td>
-            </tr>
-        </tfoot>
-    </table>
-</div>
+<section class="grid two" style="margin-top: 1rem;">
+    <article class="stat-card">
+        <span class="eyebrow">Subtotal</span>
+        <span class="stat-value">£{{ order.total_amount }}</span>
+        {% if order.payment %}
+            <p class="meta">Network commission (5%): £{{ order.payment.network_commission }}</p>
+        {% endif %}
+    </article>
+    <article class="stat-card">
+        <span class="eyebrow">Total paid</span>
+        <span class="stat-value">£{{ order.total_amount }}</span>
+        <p class="meta">Charged at checkout.</p>
+    </article>
+</section>
 
-<!-- Actions -->
-<div class="card actions space-between" style="margin-top: 1rem;">
-    <a href="{% url 'core:customer-orders' %}" class="btn">Back to Orders</a>
+<div class="actions" style="margin-top: 1rem;">
+    <a href="{% url 'core:customer-orders' %}" class="btn secondary">Back to Orders</a>
     <a href="{% url 'core:customer-product-list' %}" class="btn primary">Continue Shopping</a>
 </div>
 {% endblock %}

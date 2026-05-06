@@ -37,3 +37,7 @@ todo.md
 oldreadme.md
 
 staticfiles/
+
+# Local Playwright / dev-tour artefacts
+producer-tour-*.png
+.playwright-mcp/

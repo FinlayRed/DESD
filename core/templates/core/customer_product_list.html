@@ -3,14 +3,18 @@
 {% block title %}Browse Local Produce{% endblock %}
 
 {% block content %}
-<div class="card stack">
+<div class="page-intro">
     <div>
-        <h1 style="margin-top: 0;">Browse Local Produce</h1>
-        <p class="lead">
-            Explore products by category, search quickly, and add items to your basket.
-        </p>
+        <div class="eyebrow">Customer browse</div>
+        <h1>Browse Local Produce</h1>
+        <p>Explore products by category, search quickly, and add items to your basket.</p>
     </div>
+    <div class="chip-row">
+        <a class="btn primary" href="{% url 'core:cart' %}">View Basket</a>
+    </div>
+</div>
 
+<article class="card">
     <form method="get" class="browse-filters-form">
         <div class="browse-filters-controls">
             <input
@@ -43,8 +47,7 @@
             <div class="allergen-exclusion-grid">
                 {% for value, label in allergen_exclusion_choices %}
                     <label>
-                        <input type="checkbox" name="exclude_allergen" value="{{ value }}"
-                            {% if value in active_allergen_exclusions %}checked{% endif %}>
+                        <input type="checkbox" name="exclude_allergen" value="{{ value }}" {% if value in active_allergen_exclusions %}checked{% endif %}>
                         {{ label }}
                     </label>
                 {% endfor %}
@@ -52,120 +55,100 @@
         </fieldset>
         <div class="browse-filters-actions">
             <button class="btn primary" type="submit">Search</button>
-            <a class="btn" href="{% url 'core:customer-product-list' %}">Clear</a>
+            <a class="btn secondary" href="{% url 'core:customer-product-list' %}">Clear</a>
         </div>
     </form>
-</div>
+</article>
 
 <div class="stack" style="margin-top: 1rem;">
     {% if customer_browse_has_results %}
-    {% for category_name, products_in_category in grouped_products.items %}
-        <div class="card">
-            <div class="actions space-between">
-                <h2 style="margin: 0;">{{ category_name|title }}</h2>
-                <span class="lead">{{ products_in_category|length }} item{{ products_in_category|pluralize }}</span>
-            </div>
+        {% for category_name, products_in_category in grouped_products.items %}
+            <article class="card stack">
+                <div class="section-title">
+                    <div>
+                        <h2>{{ category_name|title }}</h2>
+                        <p>{{ products_in_category|length }} item{{ products_in_category|pluralize }}</p>
+                    </div>
+                </div>
 
-            {% if products_in_category %}
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Farm Origin</th>
-                        <th>Harvest / Availability</th>
-                        <th>Season Status</th>
-                        <th>Allergens</th>
-                        <th>Price</th>
-                        <th>Stock</th>
-                        <th>Basket</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for product in products_in_category %}
-                        <tr>
-                            <td>
-                                <strong>{{ product.name }}</strong>
-                                {% if product.organic %}
-                                    <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
-                                {% endif %}
-                                <br>
-                                <span class="lead">{{ product.description|truncatechars:90 }}</span>
-                            </td>
-                            <td>
-                                {{ product.producer.business_name }}<br>
-                                <span class="lead">{{ product.producer.postcode }}</span>
-                            </td>
-                            <td>
-                                {% if product.available_from %}
-                                    {{ product.available_from }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                                to
-                                {% if product.available_to %}
-                                    {{ product.available_to }}
-                                {% else %}
-                                    ongoing
-                                {% endif %}
-                            </td>
-                            <td>{{ product.seasonal_status }}</td>
-                            <td class="lead">
-                                {% if product.allergen_info %}
-                                    <div class="allergen-warning" role="alert">
-                                        <strong>Allergen notice</strong>
-                                        {{ product.allergen_info|linebreaksbr }}
-                                    </div>
-                                {% else %}
-                                    <span class="meta">None stated</span>
-                                {% endif %}
-                            </td>
-                            <td>£{{ product.price }}</td>
-                            <td>{{ product.stock_quantity }}</td>
-                            <td>
-                                {% if product.stock_quantity > 0 %}
-                                    <form method="post" action="{% url 'core:cart-add' product.id %}" class="actions">
-                                        {% csrf_token %}
-                                        <input
-                                            type="number"
-                                            name="quantity"
-                                            value="{{ product.minimum_order_quantity }}"
-                                            min="{{ product.minimum_order_quantity }}"
-                                            max="{{ product.stock_quantity }}"
-                                            style="width: 5rem;"
-                                        >
-                                        <button class="btn primary" type="submit">Add</button>
-                                    </form>
-                                {% else %}
-                                    <span class="badge alert">Out of stock</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="lead">No products currently listed in this category.</p>
-            {% endif %}
-        </div>
-    {% endfor %}
+                {% if products_in_category %}
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Farm Origin</th>
+                                    <th>Harvest / Availability</th>
+                                    <th>Season Status</th>
+                                    <th>Allergens</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Basket</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products_in_category %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ product.name }}</strong>
+                                            {% if product.organic %}
+                                                <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                            {% endif %}
+                                            <p class="meta" style="margin: 0.3rem 0 0;">{{ product.description|truncatechars:90 }}</p>
+                                        </td>
+                                        <td>
+                                            {{ product.producer.business_name }}
+                                            <p class="meta" style="margin: 0.3rem 0 0;">{{ product.producer.postcode }}</p>
+                                        </td>
+                                        <td>
+                                            {% if product.available_from %}{{ product.available_from }}{% else %}N/A{% endif %}
+                                            to
+                                            {% if product.available_to %}{{ product.available_to }}{% else %}ongoing{% endif %}
+                                        </td>
+                                        <td><span class="badge">{{ product.seasonal_status }}</span></td>
+                                        <td>
+                                            {% if product.allergen_info %}
+                                                <div class="allergen-warning" role="alert">
+                                                    <strong>Allergen notice</strong>
+                                                    {{ product.allergen_info|linebreaksbr }}
+                                                </div>
+                                            {% else %}
+                                                <span class="meta">None stated</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>£{{ product.price }}</td>
+                                        <td>{{ product.stock_quantity }}</td>
+                                        <td>
+                                            {% if product.stock_quantity > 0 %}
+                                                <form method="post" action="{% url 'core:cart-add' product.id %}" class="actions">
+                                                    {% csrf_token %}
+                                                    <input type="number" name="quantity" value="{{ product.minimum_order_quantity }}" min="{{ product.minimum_order_quantity }}" max="{{ product.stock_quantity }}" style="width: 5rem;">
+                                                    <button class="btn primary" type="submit">Add</button>
+                                                </form>
+                                            {% else %}
+                                                <span class="badge alert">Out of stock</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="empty-state">No products currently listed in this category.</p>
+                {% endif %}
+            </article>
+        {% endfor %}
     {% else %}
-    <div class="card browse-empty-state" role="status">
-        {% if customer_browse_catalog_empty %}
-            <h2 style="margin-top: 0;">Nothing to browse yet</h2>
-            <p class="lead">No products are available to browse right now. Please check back later.</p>
-        {% else %}
-            <h2 style="margin-top: 0;">No products match your search or filters</h2>
-            <p class="lead">
-                Try a different search term, another category, or adjust your filters
-                (for example organic only or allergen exclusions).
-            </p>
-        {% endif %}
-    </div>
+        <article class="card stack" role="status">
+            {% if customer_browse_catalog_empty %}
+                <h2 style="margin-top: 0;">Nothing to browse yet</h2>
+                <p class="meta">No products are available to browse right now. Please check back later.</p>
+            {% else %}
+                <h2 style="margin-top: 0;">No products match your search or filters</h2>
+                <p class="meta">Try a different search term, another category, or adjust your filters.</p>
+            {% endif %}
+        </article>
     {% endif %}
-
-    <div class="card actions space-between">
-        <span class="lead">Ready to review your selected items?</span>
-        <a class="btn primary" href="{% url 'core:cart' %}">View Basket</a>
-    </div>
 </div>
 {% endblock %}

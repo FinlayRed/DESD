@@ -3,107 +3,112 @@
 {% block title %}Your Basket{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h1 style="margin-top: 0;">Your Basket</h1>
-    <p class="lead">Review your items before checkout.</p>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer basket</div>
+        <h1>Your Basket</h1>
+        <p>Review your items before checkout.</p>
+    </div>
+    <div class="chip-row">
+        <a class="btn secondary" href="{% url 'core:customer-product-list' %}">Continue Shopping</a>
+        {% if cart and items_by_producer %}
+            <a class="btn primary" href="{% url 'core:checkout' %}">Proceed to Checkout</a>
+        {% endif %}
+    </div>
 </div>
 
 {% if cart and items_by_producer %}
-    <!-- Multi-vendor notice -->
     {% if is_multi_vendor %}
-        <div class="card" style="margin-top: 1rem; background: #eff6ff; border-color: #bfdbfe;">
-            <p style="margin: 0; color: #1e40af;">
-                <strong>Multi-vendor order</strong> — Your basket contains items from {{ producer_count }} different suppliers.
-                Each will prepare and deliver their items separately.
-            </p>
-        </div>
+        <article class="card">
+            <div class="chip-row">
+                <span class="badge">Multi-vendor order</span>
+                <span class="meta">Your basket contains items from {{ producer_count }} different suppliers. Each will prepare and deliver their items separately.</span>
+            </div>
+        </article>
     {% endif %}
 
-    <!-- Items grouped by producer -->
     <div class="stack" style="margin-top: 1rem;">
         {% for producer_id, vendor in items_by_producer.items %}
-            <div class="card">
-                <h3 style="margin-top: 0;">{{ vendor.producer.business_name }}</h3>
-                <p class="lead">{{ vendor.producer.postcode }}</p>
+            <article class="card stack">
+                <div class="section-title">
+                    <div>
+                        <h2>{{ vendor.producer.business_name }}</h2>
+                        <p class="meta">{{ vendor.producer.postcode }}</p>
+                    </div>
+                </div>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Subtotal</th>
-                            <th class="table-actions">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in vendor.items %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
                             <tr>
-                                <td>
-                                    <strong>{{ item.product.name }}</strong>
-                                    {% if item.product.organic %}
-                                        <span class="badge badge-organic" style="margin-left: 0.5rem;">Organic</span>
-                                    {% endif %}
-                                    {% if item.product.allergen_info %}
-                                        <br><small class="lead">Allergens: {{ item.product.allergen_info }}</small>
-                                    {% endif %}
-                                </td>
-                                <td>£{{ item.price }}</td>
-                                <td>
-                                    <form action="{% url 'core:cart-update' item.product.id %}" method="post" style="display: inline;">
-                                        {% csrf_token %}
-                                        <input type="number" name="quantity" value="{{ item.quantity }}" 
-                                               min="1" max="{{ item.product.stock_quantity }}" 
-                                               class="quantity-input" style="width: 60px;">
-                                        <button type="submit" class="btn small">Update</button>
-                                    </form>
-                                </td>
-                                <td><strong>£{{ item.total_price }}</strong></td>
-                                <td>
-                                    <form action="{% url 'core:cart-remove' item.product.id %}" method="post" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn small danger">Remove</button>
-                                    </form>
-                                </td>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                                <th>Actions</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
-                            <td><strong>£{{ vendor.subtotal }}</strong></td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {% for item in vendor.items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong>
+                                        {% if item.product.organic %}
+                                            <span class="badge badge-organic">Organic</span>
+                                        {% endif %}
+                                        {% if item.product.allergen_info %}
+                                            <p class="meta" style="margin: 0.3rem 0 0;"><strong>Allergens:</strong> {{ item.product.allergen_info }}</p>
+                                        {% endif %}
+                                    </td>
+                                    <td>£{{ item.price }}</td>
+                                    <td>
+                                        <form action="{% url 'core:cart-update' item.product.id %}" method="post" class="actions">
+                                            {% csrf_token %}
+                                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock_quantity }}" style="width: 4.5rem;">
+                                            <button type="submit" class="btn">Update</button>
+                                        </form>
+                                    </td>
+                                    <td><strong>£{{ item.total_price }}</strong></td>
+                                    <td>
+                                        <form action="{% url 'core:cart-remove' item.product.id %}" method="post">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn danger">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3"><strong>Supplier Subtotal</strong></td>
+                                <td colspan="2"><strong>£{{ vendor.subtotal }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </article>
         {% endfor %}
     </div>
 
-    <!-- Cart Total -->
-    <div class="card" style="margin-top: 1rem;">
-        <h2 style="margin-top: 0;">Order Total</h2>
-        <table>
-            <tbody>
-                <tr>
-                    <td>Items ({{ cart|length }})</td>
-                    <td style="text-align: right;"><strong>£{{ cart.total_price }}</strong></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Actions -->
-    <div class="card actions space-between" style="margin-top: 1rem;">
-        <a href="{% url 'core:customer-product-list' %}" class="btn">Continue Shopping</a>
-        <a href="{% url 'core:checkout' %}" class="btn primary">Proceed to Checkout</a>
-    </div>
+    <section class="grid two" style="margin-top: 1rem;">
+        <article class="stat-card">
+            <span class="eyebrow">Items</span>
+            <span class="stat-value">{{ cart|length }}</span>
+            <p class="meta">Line item{{ cart|length|pluralize }} in your basket</p>
+        </article>
+        <article class="stat-card">
+            <span class="eyebrow">Order total</span>
+            <span class="stat-value">£{{ cart.total_price }}</span>
+            <p class="meta">Excludes any network commission until checkout.</p>
+        </article>
+    </section>
 
 {% else %}
-    <!-- Empty Cart -->
-    <div class="card" style="margin-top: 1rem;">
-        <p class="lead">Your basket is empty.</p>
-        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
-    </div>
+    <article class="card stack">
+        <p class="empty-state">Your basket is empty.</p>
+        <div class="actions">
+            <a class="btn primary" href="{% url 'core:customer-product-list' %}">Browse Products</a>
+        </div>
+    </article>
 {% endif %}
 {% endblock %}
