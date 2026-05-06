@@ -114,7 +114,7 @@
     <div class="card" style="margin-top: 1rem;">
         <h2 style="margin-top: 0;">Update Status</h2>
         
-        <form action="{% url 'core:producer-order-status' order_id=order.id %}" method="post">
+        <form action="{% url 'core:order-status' order_id=order.id %}" method="post">
             {% csrf_token %}
             <div class="actions">
                 {% if order.status == 'confirmed' %}
@@ -145,7 +145,7 @@
 
 <!-- Actions -->
 <div class="card actions space-between" style="margin-top: 1rem;">
-    <a href="{% url 'core:producer-orders' %}" class="btn">Back to Orders</a>
+    <a href="{% url 'core:order-list' %}" class="btn">Back to Orders</a>
     <a href="{% url 'core:product-list' %}" class="btn">Manage Products</a>
 </div>
 {% endblock %}

@@ -565,7 +565,7 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
 
         if not has_items:
             messages.error(request, "You don't have items in this order.")
-            return redirect("core:producer-orders")
+            return redirect("core:order-list")
 
         new_status = request.POST.get("status")
 
@@ -576,7 +576,7 @@ class UpdateOrderStatusView(LoginRequiredMixin, View):
                 order.save()
                 messages.success(request, "Order marked as ready for collection.")
 
-        return redirect("core:producer-order-detail", pk=order_id)
+        return redirect("core:order-detail", pk=order_id)
 
 
 # =============================================================================

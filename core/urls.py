@@ -1,5 +1,5 @@
 from django.contrib.auth.views import LogoutView
-from django.urls import path, include
+from django.urls import path
 
 from .views import (
     CustomerLoginView,
@@ -40,6 +40,7 @@ from .order_views import (
     PaymentSuccessView,
     PaymentView,
     RemoveFromCartView,
+    UpdateOrderStatusView,
     UpdateCartView,
     stripe_webhook,
 )
@@ -65,7 +66,6 @@ urlpatterns = [
     path("orders/", CustomerOrderListView.as_view(), name="customer-orders"),
     path("orders/<int:pk>/", CustomerOrderDetailView.as_view(), name="customer-order-detail"),
     path("webhook/stripe/", stripe_webhook, name="stripe-webhook"),
-    path("admin-reports/", include("core.admin_urls")),
     path("producer/dashboard/", ProducerDashboardView.as_view(), name="dashboard"),
     path("producer/login/", ProducerLoginView.as_view(), name="producer-login"),
     path("producer/logout/", LogoutView.as_view(next_page="core:home"), name="producer-logout"),
@@ -77,6 +77,7 @@ urlpatterns = [
     path("producer/products/<int:pk>/delete/", ProductDeleteView.as_view(), name="product-delete"),
     path("producer/orders/", ProducerOrderListView.as_view(), name="order-list"),
     path("producer/orders/<int:pk>/", ProducerOrderDetailView.as_view(), name="order-detail"),
+    path("producer/orders/<int:order_id>/status/", UpdateOrderStatusView.as_view(), name="order-status"),
     path("producer/order-items/<int:pk>/", ProducerOrderItemUpdateView.as_view(), name="order-item-update"),
     path("producer/settlements/", ProducerSettlementListView.as_view(), name="settlement-list"),
     path("producer/settlements/<int:pk>/", ProducerSettlementDetailView.as_view(), name="settlement-detail"),
