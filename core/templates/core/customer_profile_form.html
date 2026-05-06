@@ -1,0 +1,58 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}My profile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/producer-form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer account</div>
+        <h1>Your profile</h1>
+        <p>Update the name, email and password we use for your orders. Member since {{ object.date_joined|date:"j M Y" }}.</p>
+    </div>
+</div>
+
+<div class="minimal-form-wrap">
+    <div class="minimal-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="form-field{% if form.email.errors %} has-error{% endif %}">
+                <label for="{{ form.email.id_for_label }}">Email <span class="required">*</span></label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+
+            <div class="form-row two-col">
+                <div class="form-field{% if form.first_name.errors %} has-error{% endif %}">
+                    <label for="{{ form.first_name.id_for_label }}">First name</label>
+                    {{ form.first_name }}
+                    {{ form.first_name.errors }}
+                </div>
+
+                <div class="form-field{% if form.last_name.errors %} has-error{% endif %}">
+                    <label for="{{ form.last_name.id_for_label }}">Last name</label>
+                    {{ form.last_name }}
+                    {{ form.last_name.errors }}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save profile</button>
+                <a href="{% url 'core:customer-password-change' %}" class="btn-secondary">Change password</a>
+                <a href="{% url 'core:customer-orders' %}" class="btn-secondary">My orders</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

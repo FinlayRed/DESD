@@ -34,6 +34,20 @@
             </div>
 
             <div class="form-row two-col">
+                <div class="form-field{% if form.first_name.errors %} has-error{% endif %}">
+                    <label for="{{ form.first_name.id_for_label }}">First name <span class="required">*</span></label>
+                    {{ form.first_name }}
+                    {{ form.first_name.errors }}
+                </div>
+
+                <div class="form-field{% if form.last_name.errors %} has-error{% endif %}">
+                    <label for="{{ form.last_name.id_for_label }}">Last name <span class="required">*</span></label>
+                    {{ form.last_name }}
+                    {{ form.last_name.errors }}
+                </div>
+            </div>
+
+            <div class="form-row two-col">
                 <div class="form-field{% if form.password1.errors %} has-error{% endif %}">
                     <label for="{{ form.password1.id_for_label }}">Password <span class="required">*</span></label>
                     {{ form.password1 }}

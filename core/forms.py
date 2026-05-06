@@ -131,10 +131,22 @@ class CustomerLoginForm(forms.Form):
 
 class CustomerRegisterForm(UserCreationForm):
     email = forms.EmailField()
+    first_name = forms.CharField(
+        max_length=150,
+        required=True,
+        strip=True,
+        widget=forms.TextInput(attrs={"autocomplete": "given-name"}),
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=True,
+        strip=True,
+        widget=forms.TextInput(attrs={"autocomplete": "family-name"}),
+    )
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("email",)
+        fields = ("email", "first_name", "last_name")
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -147,6 +159,34 @@ class CustomerRegisterForm(UserCreationForm):
         email = self.cleaned_data["email"]
         user.email = email
         user.username = email
+        user.first_name = self.cleaned_data["first_name"].strip()
+        user.last_name = self.cleaned_data["last_name"].strip()
+        if commit:
+            user.save()
+        return user
+
+
+class CustomerProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("email", "first_name", "last_name")
+        widgets = {
+            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
+            "first_name": forms.TextInput(attrs={"autocomplete": "given-name"}),
+            "last_name": forms.TextInput(attrs={"autocomplete": "family-name"}),
+        }
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        qs = User.objects.exclude(pk=self.instance.pk)
+        if qs.filter(email__iexact=email).exists() or qs.filter(username__iexact=email).exists():
+            raise forms.ValidationError("An account with this email already exists.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"].strip().lower()
+        user.username = user.email
         if commit:
             user.save()
         return user

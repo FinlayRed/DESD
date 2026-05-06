@@ -87,6 +87,8 @@ class CustomerAuthTests(TestCase):
             reverse("core:customer-register"),
             {
                 "email": "customer@example.com",
+                "first_name": "Alex",
+                "last_name": "Shopper",
                 "password1": "strongpass123",
                 "password2": "strongpass123",
             },
@@ -96,6 +98,8 @@ class CustomerAuthTests(TestCase):
         user_model = get_user_model()
         user = user_model.objects.get(email="customer@example.com")
         self.assertEqual(user.username, "customer@example.com")
+        self.assertEqual(user.first_name, "Alex")
+        self.assertEqual(user.last_name, "Shopper")
         self.assertEqual(self.client.session.get("_auth_user_id"), str(user.id))
 
     def test_customer_login_with_email(self):
@@ -169,6 +173,121 @@ class CustomerAuthTests(TestCase):
 
         self.assertRedirects(response, reverse("core:home"))
         self.assertNotIn("_auth_user_id", self.client.session)
+
+
+class CustomerProfileTests(TestCase):
+    def test_profile_requires_login(self):
+        response = self.client.get(reverse("core:customer-profile"))
+        self.assertRedirects(response, f"{reverse('core:customer-login')}?next=/customer/profile/")
+
+    def test_customer_can_view_and_update_profile(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="testpass123",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("core:customer-profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your profile")
+
+        response = self.client.post(
+            reverse("core:customer-profile"),
+            {
+                "email": "newemail@example.com",
+                "first_name": "Alex",
+                "last_name": "Shopper",
+            },
+        )
+        self.assertRedirects(response, reverse("core:customer-profile"))
+        user.refresh_from_db()
+        self.assertEqual(user.email, "newemail@example.com")
+        self.assertEqual(user.username, "newemail@example.com")
+        self.assertEqual(user.first_name, "Alex")
+        self.assertEqual(user.last_name, "Shopper")
+
+    def test_profile_rejects_duplicate_email(self):
+        user_model = get_user_model()
+        user_model.objects.create_user(
+            username="other@example.com",
+            email="other@example.com",
+            password="testpass123",
+        )
+        customer = user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="testpass123",
+        )
+        self.client.force_login(customer)
+
+        response = self.client.post(
+            reverse("core:customer-profile"),
+            {
+                "email": "other@example.com",
+                "first_name": "Alex",
+                "last_name": "Shopper",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "An account with this email already exists.")
+        customer.refresh_from_db()
+        self.assertEqual(customer.email, "customer@example.com")
+
+    def test_producer_redirected_from_customer_profile(self):
+        user_model = get_user_model()
+        producer_user = user_model.objects.create_user(
+            username="producer@example.com",
+            email="producer@example.com",
+            password="testpass123",
+        )
+        Producer.objects.create(user=producer_user, business_name="Farm Co", postcode="BS1 1AA")
+        self.client.force_login(producer_user)
+
+        response = self.client.get(reverse("core:customer-profile"))
+        self.assertRedirects(response, reverse("core:dashboard"))
+
+    def test_customer_password_change_requires_login(self):
+        response = self.client.get(reverse("core:customer-password-change"))
+        self.assertRedirects(
+            response,
+            f"{reverse('core:customer-login')}?next=/customer/profile/password/",
+        )
+
+    def test_customer_can_change_password(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="oldpass123",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("core:customer-password-change"),
+            {
+                "old_password": "oldpass123",
+                "new_password1": "new-strong-pass-456",
+                "new_password2": "new-strong-pass-456",
+            },
+        )
+        self.assertRedirects(response, reverse("core:customer-profile"))
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("new-strong-pass-456"))
+
+    def test_producer_redirected_from_customer_password_change(self):
+        user_model = get_user_model()
+        producer_user = user_model.objects.create_user(
+            username="producer@example.com",
+            email="producer@example.com",
+            password="testpass123",
+        )
+        Producer.objects.create(user=producer_user, business_name="Farm Co", postcode="BS1 1AA")
+        self.client.force_login(producer_user)
+
+        response = self.client.get(reverse("core:customer-password-change"))
+        self.assertRedirects(response, reverse("core:dashboard"))
 
 
 class ProducerFeatureBase(TestCase):

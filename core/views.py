@@ -1,6 +1,7 @@
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import PasswordChangeView
 from django.db.models import Prefetch, Q
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -9,6 +10,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, FormView, L
 
 from .forms import (
     CustomerLoginForm,
+    CustomerProfileForm,
     CustomerRegisterForm,
     ProducerContentForm,
     ProducerLoginForm,
@@ -38,6 +40,21 @@ class ProducerAccessMixin(LoginRequiredMixin):
         except Producer.DoesNotExist:
             messages.error(request, "Please register as a producer to access the producer workspace.")
             return redirect("core:producer-register")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CustomerAccessMixin(LoginRequiredMixin):
+    login_url = "/customer/login/"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if Producer.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                "Producer accounts should manage their profile from the producer workspace.",
+            )
+            return redirect("core:dashboard")
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -100,6 +117,29 @@ class CustomerRegisterView(FormView):
     def form_valid(self, form):
         user = form.save()
         login(self.request, user)
+        return super().form_valid(form)
+
+
+class CustomerProfileUpdateView(CustomerAccessMixin, UpdateView):
+    model = get_user_model()
+    form_class = CustomerProfileForm
+    template_name = "core/customer_profile_form.html"
+    success_url = reverse_lazy("core:customer-profile")
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, "Your profile was updated.")
+        return super().form_valid(form)
+
+
+class CustomerPasswordChangeView(CustomerAccessMixin, PasswordChangeView):
+    template_name = "core/customer_password_change.html"
+    success_url = reverse_lazy("core:customer-profile")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Your password was updated.")
         return super().form_valid(form)
 
 

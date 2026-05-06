@@ -50,13 +50,16 @@
         }
         .top-nav {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.65rem 1.15rem;
             flex-wrap: wrap;
             align-items: center;
             justify-content: flex-end;
         }
         .top-nav form {
             margin: 0;
+        }
+        .top-nav .nav-user {
+            font-weight: 700;
         }
         .site-shell {
             max-width: 1100px;
@@ -465,6 +468,11 @@
                 <span>Producer Dashboard</span>
             </a>
             <nav class="top-nav">
+                {% if user.is_authenticated %}
+                    {% if not user.producer %}
+                        <span class="nav-user">{% if user.first_name %}{{ user.first_name }}{% else %}{{ user.get_username }}{% endif %}</span>
+                    {% endif %}
+                {% endif %}
                 <a href="{% url 'core:customer-product-list' %}">Browse produce</a>
                 <a href="{% url 'core:cart' %}">Basket</a>
                 {% if user.is_authenticated %}
@@ -481,7 +489,7 @@
                             <button type="submit">Log out</button>
                         </form>
                     {% else %}
-                        <span class="nav-user">{{ user.get_username }}</span>
+                        <a href="{% url 'core:customer-profile' %}">My profile</a>
                         <a href="{% url 'core:customer-orders' %}">My orders</a>
                         <a href="{% url 'core:customer-logout' %}">Sign out</a>
                     {% endif %}
