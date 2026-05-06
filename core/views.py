@@ -1,14 +1,17 @@
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import PasswordChangeView
 from django.db.models import Prefetch, Q
 from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView
 
 from .forms import (
     CustomerLoginForm,
+    CustomerProfileForm,
     CustomerRegisterForm,
     ProducerContentForm,
     ProducerLoginForm,
@@ -20,6 +23,37 @@ from .forms import (
 )
 from .models import Order, OrderItem, Producer, ProducerContent, ProducerSettlement, Product, SurplusListing
 from .services import item_food_miles, order_item_requires_attention, sync_producer_settlements
+
+# Customer browse: exclude products whose allergen_info matches any keyword in selected groups (keyword-based).
+ALLERGEN_EXCLUSION_GROUPS = {
+    "gluten": ["gluten", "wheat", "barley", "rye", "oat"],
+    "milk": ["milk", "dairy", "lactose", "butter", "cream", "cheese", "yoghurt", "yogurt"],
+    "eggs": ["egg"],
+    "peanuts": ["peanut"],
+    "nuts": ["almond", "hazelnut", "walnut", "cashew", "pecan", "brazil nut", "macadamia", "pistachio", "nuts"],
+    "soya": ["soya", "soy"],
+    "celery": ["celery"],
+    "mustard": ["mustard"],
+    "sesame": ["sesame"],
+    "fish": ["fish"],
+    "crustaceans": ["crustacean", "prawn", "shrimp", "lobster", "crab"],
+    "molluscs": ["mollusc", "mussel", "oyster", "squid", "snail"],
+}
+
+ALLERGEN_EXCLUSION_CHOICES = [
+    ("gluten", "Gluten"),
+    ("milk", "Milk/dairy"),
+    ("eggs", "Eggs"),
+    ("peanuts", "Peanuts"),
+    ("nuts", "Tree nuts"),
+    ("soya", "Soya"),
+    ("celery", "Celery"),
+    ("mustard", "Mustard"),
+    ("sesame", "Sesame"),
+    ("fish", "Fish"),
+    ("crustaceans", "Crustaceans"),
+    ("molluscs", "Molluscs"),
+]
 
 
 class HomeView(TemplateView):
@@ -38,6 +72,21 @@ class ProducerAccessMixin(LoginRequiredMixin):
         except Producer.DoesNotExist:
             messages.error(request, "Please register as a producer to access the producer workspace.")
             return redirect("core:producer-register")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CustomerAccessMixin(LoginRequiredMixin):
+    login_url = "/customer/login/"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if Producer.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                "Producer accounts should manage their profile from the producer workspace.",
+            )
+            return redirect("core:dashboard")
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -103,6 +152,30 @@ class CustomerRegisterView(FormView):
         return super().form_valid(form)
 
 
+class CustomerProfileUpdateView(CustomerAccessMixin, UpdateView):
+    model = get_user_model()
+    form_class = CustomerProfileForm
+    template_name = "core/customer_profile_form.html"
+    success_url = reverse_lazy("core:customer-profile")
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, "Your profile was updated.")
+        return super().form_valid(form)
+
+
+class CustomerPasswordChangeView(CustomerAccessMixin, PasswordChangeView):
+    template_name = "core/customer_password_change.html"
+    success_url = reverse_lazy("core:customer-profile")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Your password was updated.")
+        return super().form_valid(form)
+
+
+@require_POST
 def user_logout_view(request):
     logout(request)
     return redirect("core:home")
@@ -480,11 +553,25 @@ class CustomerProductBrowseView(ListView):
             queryset = queryset.filter(
                 Q(name__icontains=query)
                 | Q(description__icontains=query)
-                | Q(category__name__icontains=query)
                 | Q(producer__business_name__icontains=query)
             )
         if category:
             queryset = queryset.filter(category__name__iexact=category)
+        if self.request.GET.get("organic") == "1":
+            queryset = queryset.filter(organic=True)
+
+        exclusion_keys = [
+            key
+            for key in self.request.GET.getlist("exclude_allergen")
+            if key in ALLERGEN_EXCLUSION_GROUPS
+        ]
+        if exclusion_keys:
+            allergen_match = Q()
+            for key in exclusion_keys:
+                for kw in ALLERGEN_EXCLUSION_GROUPS[key]:
+                    allergen_match |= Q(allergen_info__icontains=kw)
+            queryset = queryset.exclude(allergen_match)
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -511,8 +598,20 @@ class CustomerProductBrowseView(ListView):
             grouped[key].append(product)
 
         context["grouped_products"] = grouped
+        context["customer_browse_has_results"] = bool(products)
+        if products:
+            context["customer_browse_catalog_empty"] = False
+        else:
+            context["customer_browse_catalog_empty"] = not Product.objects.filter(is_active=True).exists()
         context["query"] = self.request.GET.get("q", "").strip()
         context["active_category"] = self.request.GET.get("category", "").strip().lower()
+        context["organic_only"] = self.request.GET.get("organic") == "1"
+        context["allergen_exclusion_choices"] = ALLERGEN_EXCLUSION_CHOICES
+        context["active_allergen_exclusions"] = [
+            key
+            for key in self.request.GET.getlist("exclude_allergen")
+            if key in ALLERGEN_EXCLUSION_GROUPS
+        ]
         context["category_keys"] = self.category_keys
         return context
 

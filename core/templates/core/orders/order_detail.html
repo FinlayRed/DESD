@@ -10,7 +10,16 @@
         <p>Placed on {{ order.created_at|date:"d M Y, H:i" }}.</p>
     </div>
     <div class="chip-row">
-        <span class="badge">{{ order.get_status_display }}</span>
+        <span class="badge
+            {% if order.customer_progress_badge_key == 'pending' %}badge-pending
+            {% elif order.customer_progress_badge_key == 'confirmed' %}badge-confirmed
+            {% elif order.customer_progress_badge_key == 'processing' %}badge-processing
+            {% elif order.customer_progress_badge_key == 'ready' %}badge-ready
+            {% elif order.customer_progress_badge_key == 'delivered' %}badge-delivered
+            {% elif order.customer_progress_badge_key == 'cancelled' %}badge-cancelled
+            {% endif %}">
+            {{ order.get_customer_progress_display }}
+        </span>
     </div>
 </div>
 
@@ -58,7 +67,7 @@
                 </div>
                 <div class="chip-row">
                     {% if vendor.producer.organic %}
-                        <span class="badge">Organic producer</span>
+                        <span class="badge badge-organic">Organic producer</span>
                     {% endif %}
                 </div>
             </div>
@@ -77,7 +86,10 @@
                         {% for item in vendor.items %}
                             <tr>
                                 <td>
-                                    {{ item.product.name }}
+                                    <strong>{{ item.product.name }}</strong>
+                                    {% if item.product.organic %}
+                                        <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                    {% endif %}
                                     {% if item.product.allergen_info %}
                                         <p class="meta" style="margin: 0.3rem 0 0;"><strong>Allergens:</strong> {{ item.product.allergen_info }}</p>
                                     {% endif %}

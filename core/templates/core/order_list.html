@@ -50,7 +50,12 @@
                         <tbody>
                             {% for item in order.producer_items %}
                                 <tr>
-                                    <td>{{ item.product.name }}</td>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong>
+                                        {% if item.product.organic %}
+                                            <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ item.quantity }}</td>
                                     <td>{{ item.get_status_display }}</td>
                                     <td>{% if item.food_miles != None %}{{ item.food_miles }} miles{% else %}-{% endif %}</td>

@@ -54,7 +54,10 @@
                                     <td>
                                         <strong>{{ item.product.name }}</strong>
                                         {% if item.product.organic %}
-                                            <span class="badge">Organic</span>
+                                            <span class="badge badge-organic">Organic</span>
+                                        {% endif %}
+                                        {% if item.product.allergen_info %}
+                                            <p class="meta" style="margin: 0.3rem 0 0;"><strong>Allergens:</strong> {{ item.product.allergen_info }}</p>
                                         {% endif %}
                                     </td>
                                     <td>£{{ item.price }}</td>

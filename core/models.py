@@ -162,6 +162,61 @@ class Order(models.Model):
     def minimum_collection_date(self):
         return (timezone.now() + timezone.timedelta(hours=48)).date()
 
+    def _rollup_item_status_for_customer(self):
+        """
+        Derive a single status from line items: use the least-advanced active item
+        so the customer sees e.g. Preparing when any item is still being prepared.
+        """
+        items = list(self.items.all())
+        if not items:
+            return None
+        # OrderItem is defined later in this module; resolved at call time.
+        active = [i for i in items if i.status != OrderItem.STATUS_CANCELLED]
+        if not active:
+            return OrderItem.STATUS_CANCELLED
+        rank = {
+            OrderItem.STATUS_PENDING: 0,
+            OrderItem.STATUS_ACCEPTED: 1,
+            OrderItem.STATUS_PREPARING: 2,
+            OrderItem.STATUS_READY: 3,
+            OrderItem.STATUS_FULFILLED: 4,
+        }
+        ranks = [rank[i.status] for i in active]
+        if all(i.status == OrderItem.STATUS_FULFILLED for i in active):
+            return OrderItem.STATUS_FULFILLED
+        worst_rank = min(ranks)
+        for st, r in rank.items():
+            if r == worst_rank:
+                return st
+        return OrderItem.STATUS_PENDING
+
+    def get_customer_progress_display(self):
+        """Label from producer line-item workflow (replaces static Order.status for shoppers)."""
+        code = self._rollup_item_status_for_customer()
+        if code is None:
+            return self.get_status_display()
+        return dict(OrderItem.STATUS_CHOICES)[code]
+
+    @property
+    def customer_progress_badge_key(self):
+        """
+        Map rolled-up item status to Order.status-style slug for existing badge CSS.
+        """
+        code = self._rollup_item_status_for_customer()
+        if code is None:
+            return self.status
+        if code == OrderItem.STATUS_CANCELLED:
+            return self.STATUS_CANCELLED
+        if code == OrderItem.STATUS_FULFILLED:
+            return self.STATUS_DELIVERED
+        if code == OrderItem.STATUS_READY:
+            return self.STATUS_READY
+        if code in (OrderItem.STATUS_ACCEPTED, OrderItem.STATUS_PREPARING):
+            return self.STATUS_PROCESSING
+        if code == OrderItem.STATUS_PENDING:
+            return self.STATUS_PENDING
+        return self.STATUS_CONFIRMED
+
     def save(self, *args, **kwargs):
         creating = self._state.adding
         super().save(*args, **kwargs)

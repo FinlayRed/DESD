@@ -11,8 +11,8 @@
 <div class="page-intro">
     <div>
         <div class="eyebrow">Customer onboarding</div>
-        <h1>Create a customer account</h1>
-        <p>Register to start shopping local produce. To sell produce instead, use <a href="{% url 'core:producer-register' %}">producer registration</a>.</p>
+        <h1>Create your customer account</h1>
+        <p>Register to start shopping for fresh produce. If you want to sell, use <a href="{% url 'core:producer-register' %}">producer registration</a> instead.</p>
     </div>
 </div>
 
@@ -31,6 +31,20 @@
                 <label for="{{ form.email.id_for_label }}">Email <span class="required">*</span></label>
                 {{ form.email }}
                 {{ form.email.errors }}
+            </div>
+
+            <div class="form-row two-col">
+                <div class="form-field{% if form.first_name.errors %} has-error{% endif %}">
+                    <label for="{{ form.first_name.id_for_label }}">First name <span class="required">*</span></label>
+                    {{ form.first_name }}
+                    {{ form.first_name.errors }}
+                </div>
+
+                <div class="form-field{% if form.last_name.errors %} has-error{% endif %}">
+                    <label for="{{ form.last_name.id_for_label }}">Last name <span class="required">*</span></label>
+                    {{ form.last_name }}
+                    {{ form.last_name.errors }}
+                </div>
             </div>
 
             <div class="form-row two-col">

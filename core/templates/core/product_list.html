@@ -60,7 +60,7 @@
                             <td>
                                 <div>{{ product.display_origin }}</div>
                                 <p class="meta" style="margin: 0.35rem 0 0;">
-                                    {% if product.organic %}Organic{% else %}Conventional{% endif %}
+                                    {% if product.organic %}<span class="badge badge-organic">Organic</span>{% else %}Conventional{% endif %}
                                     {% if product.best_before_date %} · Best before {{ product.best_before_date }}{% endif %}
                                 </p>
                             </td>

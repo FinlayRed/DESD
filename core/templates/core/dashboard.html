@@ -37,6 +37,7 @@
                         <div class="actions" style="justify-content: space-between; align-items: flex-start;">
                             <div>
                                 <strong>{{ item.product.name }}</strong>
+                                {% if item.product.organic %}<span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>{% endif %}
                                 <p class="meta" style="margin: 0.3rem 0 0;">{{ item.quantity }} units for {{ item.order.reference }}{% if item.order.fulfilment_date %} · needed {{ item.order.fulfilment_date }}{% endif %}</p>
                             </div>
                             <div class="chip-row">
@@ -95,6 +96,7 @@
                 {% for product in low_stock_products %}
                     <li class="list-item">
                         <strong>{{ product.name }}</strong>
+                        {% if product.organic %}<span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>{% endif %}
                         <p class="meta" style="margin: 0.3rem 0 0;">{{ product.stock_quantity }} left · {{ product.available_window }}</p>
                     </li>
                 {% endfor %}
@@ -117,6 +119,7 @@
                 {% for listing in active_surplus %}
                     <li class="list-item">
                         <strong>{{ listing.product.name }}</strong>
+                        {% if listing.product.organic %}<span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>{% endif %}
                         <p class="meta" style="margin: 0.3rem 0 0;">{{ listing.discount_percent }}% off until {{ listing.available_until|date:"d M Y H:i" }}</p>
                     </li>
                 {% endfor %}

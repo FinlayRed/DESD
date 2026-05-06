@@ -82,7 +82,10 @@
             {% for item in items %}
                 <tr>
                     <td>
-                        {{ item.product.name }}
+                        <strong>{{ item.product.name }}</strong>
+                        {% if item.product.organic %}
+                            <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                        {% endif %}
                         {% if item.product.allergen_info %}
                             <br><small class="lead">Allergens: {{ item.product.allergen_info }}</small>
                         {% endif %}

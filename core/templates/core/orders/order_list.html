@@ -24,7 +24,16 @@
                         <p class="meta">{{ order.created_at|date:"d M Y, H:i" }}</p>
                     </div>
                     <div class="chip-row">
-                        <span class="badge">{{ order.get_status_display }}</span>
+                        <span class="badge
+                            {% if order.customer_progress_badge_key == 'pending' %}badge-pending
+                            {% elif order.customer_progress_badge_key == 'confirmed' %}badge-confirmed
+                            {% elif order.customer_progress_badge_key == 'processing' %}badge-processing
+                            {% elif order.customer_progress_badge_key == 'ready' %}badge-ready
+                            {% elif order.customer_progress_badge_key == 'delivered' %}badge-delivered
+                            {% elif order.customer_progress_badge_key == 'cancelled' %}badge-cancelled
+                            {% endif %}">
+                            {{ order.get_customer_progress_display }}
+                        </span>
                         {% if order.collection_date %}
                             <span class="badge">Collection {{ order.collection_date|date:"D, d M Y" }}</span>
                         {% endif %}
