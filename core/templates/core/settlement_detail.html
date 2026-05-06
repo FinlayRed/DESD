@@ -10,6 +10,7 @@
         <p>Every paid producer order item in this weekly window is shown below with gross, commission, and net values.</p>
     </div>
     <div class="chip-row">
+        <a class="btn" href="{% url 'core:settlement-export' settlement.pk %}">Export CSV</a>
         <span class="badge">{{ settlement.get_status_display }}</span>
         <span class="badge">Gross {{ settlement.gross_amount }}</span>
         <span class="badge">Net {{ settlement.net_amount }}</span>

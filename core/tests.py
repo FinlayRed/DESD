@@ -1,5 +1,6 @@
-from decimal import Decimal
+import csv
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -785,6 +786,50 @@ class SettlementTests(ProducerFeatureBase):
         self.assertContains(response, "10.00")
         self.assertContains(response, "0.50")
         self.assertContains(response, "9.50")
+
+    def test_producer_can_export_settlement_csv(self):
+        order = Order.objects.create(
+            customer=self.customer_user,
+            paid=True,
+            fulfilment_date=timezone.localdate(),
+        )
+        OrderItem.objects.create(
+            order=order,
+            product=self.product,
+            quantity=4,
+            price=Decimal("2.50"),
+            status=OrderItem.STATUS_READY,
+        )
+
+        self.client.force_login(self.producer_user)
+        self.client.get(reverse("core:settlement-list"))
+        settlement = ProducerSettlement.objects.get(producer=self.producer)
+
+        response = self.client.get(reverse("core:settlement-export", kwargs={"pk": settlement.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment;", response["Content-Disposition"])
+        rows = list(csv.reader(response.content.decode().splitlines()))
+        self.assertEqual(rows[0][0], "Settlement Week Start")
+        self.assertEqual(rows[1][3], order.reference)
+        self.assertEqual(rows[1][5], "Carrots")
+        self.assertEqual(rows[1][6], "4")
+        self.assertEqual(rows[1][8], "10.00")
+        self.assertEqual(rows[1][9], "0.50")
+        self.assertEqual(rows[1][10], "9.50")
+
+    def test_producer_cannot_export_another_producers_settlement_csv(self):
+        settlement = ProducerSettlement.objects.create(
+            producer=self.other_producer,
+            week_start=timezone.localdate(),
+            week_end=timezone.localdate(),
+        )
+
+        self.client.force_login(self.producer_user)
+        response = self.client.get(reverse("core:settlement-export", kwargs={"pk": settlement.pk}))
+
+        self.assertEqual(response.status_code, 404)
 
 
 class SurplusAndContentTests(ProducerFeatureBase):

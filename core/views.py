@@ -1,8 +1,11 @@
+import csv
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.db.models import Prefetch, Q
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.http import require_POST
 from django.urls import reverse, reverse_lazy
@@ -429,6 +432,49 @@ class ProducerSettlementDetailView(ProducerAccessMixin, DetailView):
             "entries__order_item__product",
             "entries__order_item__order",
         )
+
+
+class ProducerSettlementCsvExportView(ProducerSettlementDetailView):
+    def get(self, request, *args, **kwargs):
+        settlement = self.get_object()
+        filename = f"producer_settlement_{settlement.week_start:%Y%m%d}_{settlement.week_end:%Y%m%d}.csv"
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "Settlement Week Start",
+            "Settlement Week End",
+            "Status",
+            "Order Reference",
+            "Order Date",
+            "Product",
+            "Quantity",
+            "Unit Price (GBP)",
+            "Gross Amount (GBP)",
+            "Commission Amount (GBP)",
+            "Net Amount (GBP)",
+        ])
+
+        for entry in settlement.entries.all():
+            order_item = entry.order_item
+            order = order_item.order
+            writer.writerow([
+                settlement.week_start.isoformat(),
+                settlement.week_end.isoformat(),
+                settlement.get_status_display(),
+                order.reference or f"ORD-{order.pk:05d}",
+                timezone.localtime(order.created_at).strftime("%Y-%m-%d %H:%M"),
+                order_item.product.name,
+                order_item.quantity,
+                f"{order_item.price:.2f}",
+                f"{entry.gross_amount:.2f}",
+                f"{entry.commission_amount:.2f}",
+                f"{entry.net_amount:.2f}",
+            ])
+
+        return response
 
 
 class ProducerSurplusListView(ProducerAccessMixin, ListView):
