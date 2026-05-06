@@ -1,0 +1,64 @@
+{% extends "core/base.html" %}
+
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">My Orders</h1>
+    <p class="lead">View your order history and track current orders.</p>
+</div>
+
+{% if orders %}
+    <div class="stack" style="margin-top: 1rem;">
+        {% for order in orders %}
+            <div class="card">
+                <div class="actions space-between" style="margin-bottom: 0.75rem;">
+                    <h3 style="margin: 0;">Order #{{ order.id }}</h3>
+                    <span class="badge 
+                        {% if order.status == 'pending' %}badge-pending
+                        {% elif order.status == 'confirmed' %}badge-confirmed
+                        {% elif order.status == 'processing' %}badge-processing
+                        {% elif order.status == 'ready' %}badge-ready
+                        {% elif order.status == 'delivered' %}badge-delivered
+                        {% elif order.status == 'cancelled' %}badge-cancelled
+                        {% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                
+                <table>
+                    <tbody>
+                        <tr>
+                            <td class="lead">Order Date</td>
+                            <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
+                        </tr>
+                        {% if order.collection_date %}
+                        <tr>
+                            <td class="lead">Collection Date</td>
+                            <td style="text-align: right;">{{ order.collection_date|date:"D, d M Y" }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td class="lead">Items</td>
+                            <td style="text-align: right;">{{ order.items.count }} item{{ order.items.count|pluralize }}</td>
+                        </tr>
+                        <tr>
+                            <td class="lead">Total</td>
+                            <td style="text-align: right;"><strong>£{{ order.total_amount }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="actions" style="margin-top: 0.75rem;">
+                    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary small">View Details</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">You haven't placed any orders yet.</p>
+        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
+    </div>
+{% endif %}
+{% endblock %}

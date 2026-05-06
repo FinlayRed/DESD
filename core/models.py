@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Producer(models.Model):
@@ -87,10 +88,16 @@ class Product(models.Model):
             return self.farm_origin
         return self.producer.business_name if self.producer else "Unknown origin"
 
+    @property
+    def is_available(self):
+        return self.is_active and self.stock_quantity > 0
+
 
 class Order(models.Model):
     STATUS_PENDING = "pending"
     STATUS_CONFIRMED = "confirmed"
+    STATUS_PROCESSING = "processing"
+    STATUS_READY = "ready"
     STATUS_DELIVERED = "delivered"
     STATUS_CANCELLED = "cancelled"
 
@@ -100,6 +107,8 @@ class Order(models.Model):
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_CONFIRMED, "Confirmed"),
+        (STATUS_PROCESSING, "Processing"),
+        (STATUS_READY, "Ready for Collection"),
         (STATUS_DELIVERED, "Delivered"),
         (STATUS_CANCELLED, "Cancelled"),
     ]
@@ -120,9 +129,12 @@ class Order(models.Model):
     customer_name = models.CharField(max_length=120, blank=True)
     customer_email = models.EmailField(blank=True)
     delivery_postcode = models.CharField(max_length=10, blank=True)
+    delivery_address = models.TextField(blank=True)
+    collection_date = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    confirmed_at = models.DateTimeField(blank=True, null=True)
     paid = models.BooleanField(default=False)
 
     class Meta:
@@ -137,6 +149,18 @@ class Order(models.Model):
             return self.customer_name
         full_name = self.customer.get_full_name().strip()
         return full_name or self.customer.get_username()
+
+    @property
+    def total_amount(self):
+        return sum(item.line_total for item in self.items.all())
+
+    @property
+    def is_multi_vendor(self):
+        return self.items.values("product__producer_id").distinct().count() > 1
+
+    @property
+    def minimum_collection_date(self):
+        return (timezone.now() + timezone.timedelta(hours=48)).date()
 
     def save(self, *args, **kwargs):
         creating = self._state.adding
@@ -232,6 +256,10 @@ class OrderItem(models.Model):
     def total_price(self):
         return self.price * self.quantity
 
+    @property
+    def line_total(self):
+        return self.total_price
+
 
 class SettlementEntry(models.Model):
     settlement = models.ForeignKey(ProducerSettlement, on_delete=models.CASCADE, related_name="entries")
@@ -249,11 +277,27 @@ class SettlementEntry(models.Model):
 
 
 class Payment(models.Model):
-    order = models.OneToOneField(Order, on_delete=models.CASCADE)
+    STATUS_PENDING = "pending"
+    STATUS_COMPLETED = "completed"
+    STATUS_FAILED = "failed"
+    STATUS_REFUNDED = "refunded"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_FAILED, "Failed"),
+        (STATUS_REFUNDED, "Refunded"),
+    ]
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     network_commission = models.DecimalField(max_digits=10, decimal_places=2)
     producer_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True)
+    stripe_charge_id = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ("-created_at",)

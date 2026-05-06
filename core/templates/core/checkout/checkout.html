@@ -1,0 +1,146 @@
+{% extends "core/base.html" %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">Checkout</h1>
+    <p class="lead">Review your basket and confirm your delivery or collection details.</p>
+</div>
+
+{% if cart and items_by_producer %}
+    <!-- Order Type Info -->
+    <div class="card" style="margin-top: 1rem;">
+        <h2 style="margin-top: 0;">Order Type</h2>
+        {% if is_multi_vendor %}
+            <p><strong>Multi-vendor order</strong> — your basket includes products from {{ producer_count }} suppliers.</p>
+            <p class="lead">Each supplier will manage their own delivery or collection.</p>
+        {% else %}
+            <p><strong>Single-vendor order</strong> — all items are from one supplier.</p>
+            <p class="lead">Delivery or collection will be coordinated directly with the producer.</p>
+        {% endif %}
+    </div>
+
+    <!-- Vendor Groups -->
+    <div class="stack" style="margin-top: 1rem;">
+        {% for producer_id, vendor in items_by_producer.items %}
+            <div class="card">
+                <h3 style="margin-top: 0;">Supplier: {{ vendor.producer.business_name }}</h3>
+                <p class="lead">Farm postcode: {{ vendor.producer.postcode }}</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in vendor.items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>£{{ item.price }}</td>
+                                <td>£{{ item.total_price }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: right;"><strong>Supplier Subtotal:</strong></td>
+                            <td><strong>£{{ vendor.subtotal }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="card" style="margin-top: 0.85rem; background: #fbfcfd;">
+                    <h4 style="margin-top: 0;">Supplier Responsibilities</h4>
+                    <p class="lead">
+                        This producer will confirm availability, packaging, and delivery or collection details for your items.
+                    </p>
+                    {% if item.product.allergen_info %}
+                        <p class="lead"><strong>Allergen Info:</strong> {{ item.product.allergen_info }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Collection Details Form -->
+    <form method="post" id="checkout-form">
+        {% csrf_token %}
+        
+        <div class="card" style="margin-top: 1rem;">
+            <h2 style="margin-top: 0;">Collection Details</h2>
+            
+            <p>
+                <label for="postcode"><strong>Your Postcode *</strong></label>
+                <input type="text" id="postcode" name="postcode" placeholder="e.g., BS1 4DJ" required>
+                <span class="lead">Used to calculate food miles for environmental reporting</span>
+            </p>
+            
+            <p>
+                <label for="address"><strong>Delivery Address (optional)</strong></label>
+                <textarea id="address" name="address" placeholder="Full delivery address if applicable"></textarea>
+            </p>
+            
+            <p>
+                <label for="collection_date"><strong>Preferred Collection Date *</strong></label>
+                <input type="date" id="collection_date" name="collection_date" 
+                       min="{{ min_collection_date|date:'Y-m-d' }}" required>
+            </p>
+            
+            <div class="card" style="background: #fff7ed; border-color: #fed7aa;">
+                <p style="margin: 0; color: #7c2d12;">
+                    <strong>48-hour lead time required.</strong><br>
+                    Earliest available date: <strong>{{ min_collection_date|date:'D, d M Y' }}</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="card" style="margin-top: 1rem;">
+            <h2 style="margin-top: 0;">Order Summary</h2>
+            
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Items ({{ cart|length }})</td>
+                        <td style="text-align: right;">£{{ total }}</td>
+                    </tr>
+                    <tr>
+                        <td>Network Commission (5%)</td>
+                        <td style="text-align: right;">£{{ network_commission }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr style="font-size: 1.1em;">
+                        <td><strong>Total</strong></td>
+                        <td style="text-align: right;"><strong>£{{ total }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <p class="lead" style="margin-top: 1rem; margin-bottom: 0;">
+                The 5% network commission supports the Bristol Regional Food Network platform.
+                Producers receive £{{ producer_total }} from this order.
+            </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="card actions space-between" style="margin-top: 1rem;">
+            <a href="{% url 'core:cart' %}" class="btn">Back to Basket</a>
+            <button type="submit" class="btn primary">Proceed to Payment</button>
+        </div>
+    </form>
+
+{% else %}
+    <!-- Empty Cart State -->
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">Your basket is empty.</p>
+        <a href="{% url 'core:customer-product-list' %}" class="btn primary">Browse Products</a>
+    </div>
+{% endif %}
+{% endblock %}

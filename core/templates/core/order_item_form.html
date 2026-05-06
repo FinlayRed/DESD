@@ -20,25 +20,25 @@
     <div class="minimal-form">
         <form method="post" novalidate>
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
             <div class="form-errors">
                 {{ form.non_field_errors }}
             </div>
             {% endif %}
-            
+
             <div class="form-field{% if form.status.errors %} has-error{% endif %}">
                 <label for="{{ form.status.id_for_label }}">Status <span class="required">*</span></label>
                 {{ form.status }}
                 {{ form.status.errors }}
             </div>
-            
+
             <div class="form-field{% if form.producer_notes.errors %} has-error{% endif %}">
                 <label for="{{ form.producer_notes.id_for_label }}">Producer notes <span class="optional">(optional)</span></label>
                 {{ form.producer_notes }}
                 {{ form.producer_notes.errors }}
             </div>
-            
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Save order item</button>
                 <a href="{% url 'core:order-detail' object.order.pk %}" class="btn-secondary">Back to order</a>

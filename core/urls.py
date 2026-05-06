@@ -2,7 +2,6 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path, include
 
 from .views import (
-    CustomerCheckoutView,
     CustomerLoginView,
     CustomerProductBrowseView,
     CustomerRegisterView,
@@ -30,16 +29,38 @@ from .views import (
     ProductUpdateView,
     user_logout_view,
 )
+from .order_views import (
+    AddToCartView,
+    CartView,
+    CheckoutView,
+    CustomerOrderDetailView,
+    CustomerOrderListView,
+    PaymentSuccessView,
+    PaymentView,
+    RemoveFromCartView,
+    UpdateCartView,
+    stripe_webhook,
+)
 
 app_name = "core"
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("customer/products/", CustomerProductBrowseView.as_view(), name="customer-product-list"),
-    path("customer/checkout/", CustomerCheckoutView.as_view(), name="customer-checkout"),
+    path("customer/checkout/", CheckoutView.as_view(), name="customer-checkout"),
     path("customer/login/", CustomerLoginView.as_view(), name="customer-login"),
     path("customer/register/", CustomerRegisterView.as_view(), name="customer-register"),
     path("customer/logout/", user_logout_view, name="customer-logout"),
+    path("cart/", CartView.as_view(), name="cart"),
+    path("cart/add/<int:product_id>/", AddToCartView.as_view(), name="cart-add"),
+    path("cart/update/<int:product_id>/", UpdateCartView.as_view(), name="cart-update"),
+    path("cart/remove/<int:product_id>/", RemoveFromCartView.as_view(), name="cart-remove"),
+    path("checkout/", CheckoutView.as_view(), name="checkout"),
+    path("payment/<int:order_id>/", PaymentView.as_view(), name="payment"),
+    path("payment/<int:order_id>/success/", PaymentSuccessView.as_view(), name="payment-success"),
+    path("orders/", CustomerOrderListView.as_view(), name="customer-orders"),
+    path("orders/<int:pk>/", CustomerOrderDetailView.as_view(), name="customer-order-detail"),
+    path("webhook/stripe/", stripe_webhook, name="stripe-webhook"),
     path("admin-reports/", include("core.admin_urls")),
     path("producer/dashboard/", ProducerDashboardView.as_view(), name="dashboard"),
     path("producer/login/", ProducerLoginView.as_view(), name="producer-login"),

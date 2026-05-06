@@ -320,16 +320,16 @@
   .minimal-form {
     padding: 16px;
   }
-  
+
   .form-row.two-col {
     grid-template-columns: 1fr;
   }
-  
+
   .form-actions {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .form-actions .btn-primary,
   .form-actions .btn-secondary,
   .form-actions button.primary,

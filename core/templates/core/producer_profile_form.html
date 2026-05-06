@@ -20,27 +20,27 @@
     <div class="minimal-form">
         <form method="post" novalidate>
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
             <div class="form-errors">
                 {{ form.non_field_errors }}
             </div>
             {% endif %}
-            
+
             <div class="form-row two-col">
                 <div class="form-field{% if form.business_name.errors %} has-error{% endif %}">
                     <label for="{{ form.business_name.id_for_label }}">Business name <span class="required">*</span></label>
                     {{ form.business_name }}
                     {{ form.business_name.errors }}
                 </div>
-                
+
                 <div class="form-field{% if form.postcode.errors %} has-error{% endif %}">
                     <label for="{{ form.postcode.id_for_label }}">Postcode <span class="required">*</span></label>
                     {{ form.postcode }}
                     {{ form.postcode.errors }}
                 </div>
             </div>
-            
+
             <div class="form-field">
                 <label class="checkbox-field">
                     {{ form.organic }}
@@ -50,7 +50,7 @@
                 </label>
                 {{ form.organic.errors }}
             </div>
-            
+
             <div class="form-actions">
                 <button type="submit" class="btn-primary">Save profile</button>
                 <a href="{% url 'core:dashboard' %}" class="btn-secondary">Back to dashboard</a>
