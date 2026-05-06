@@ -82,6 +82,11 @@ class ProducerAuthTests(TestCase):
 
 
 class CustomerAuthTests(TestCase):
+    def test_customer_register_get_renders_form(self):
+        response = self.client.get(reverse("core:customer-register"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Create your customer account")
+
     def test_customer_register_creates_user_and_logs_in(self):
         response = self.client.post(
             reverse("core:customer-register"),
@@ -101,6 +106,92 @@ class CustomerAuthTests(TestCase):
         self.assertEqual(user.first_name, "Alex")
         self.assertEqual(user.last_name, "Shopper")
         self.assertEqual(self.client.session.get("_auth_user_id"), str(user.id))
+
+    def test_customer_register_normalizes_email_to_lowercase(self):
+        self.client.post(
+            reverse("core:customer-register"),
+            {
+                "email": "  Customer@EXAMPLE.com  ",
+                "first_name": "Alex",
+                "last_name": "Shopper",
+                "password1": "strongpass123",
+                "password2": "strongpass123",
+            },
+        )
+        user_model = get_user_model()
+        user = user_model.objects.get(username="customer@example.com")
+        self.assertEqual(user.email, "customer@example.com")
+
+    def test_customer_register_rejects_mismatched_passwords(self):
+        response = self.client.post(
+            reverse("core:customer-register"),
+            {
+                "email": "customer@example.com",
+                "first_name": "Alex",
+                "last_name": "Shopper",
+                "password1": "strongpass123",
+                "password2": "otherpass999",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "The two password fields didn’t match.")
+        self.assertFalse(get_user_model().objects.filter(email="customer@example.com").exists())
+
+    def test_customer_register_rejects_duplicate_email(self):
+        user_model = get_user_model()
+        user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="existingpass123",
+        )
+        response = self.client.post(
+            reverse("core:customer-register"),
+            {
+                "email": "customer@example.com",
+                "first_name": "Alex",
+                "last_name": "Shopper",
+                "password1": "strongpass123",
+                "password2": "strongpass123",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "An account with this email already exists.")
+        self.assertEqual(user_model.objects.filter(email="customer@example.com").count(), 1)
+
+    def test_customer_register_rejects_duplicate_email_case_insensitive(self):
+        user_model = get_user_model()
+        user_model.objects.create_user(
+            username="customer@example.com",
+            email="customer@example.com",
+            password="existingpass123",
+        )
+        response = self.client.post(
+            reverse("core:customer-register"),
+            {
+                "email": "CUSTOMER@EXAMPLE.COM",
+                "first_name": "Alex",
+                "last_name": "Shopper",
+                "password1": "strongpass123",
+                "password2": "strongpass123",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "An account with this email already exists.")
+
+    def test_customer_register_requires_first_and_last_name(self):
+        response = self.client.post(
+            reverse("core:customer-register"),
+            {
+                "email": "customer@example.com",
+                "first_name": "",
+                "last_name": "Shopper",
+                "password1": "strongpass123",
+                "password2": "strongpass123",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This field is required.")
+        self.assertFalse(get_user_model().objects.filter(email="customer@example.com").exists())
 
     def test_customer_login_with_email(self):
         user_model = get_user_model()
@@ -348,6 +439,167 @@ class ProducerFeatureBase(TestCase):
         )
 
 
+class CustomerProductSearchTests(ProducerFeatureBase):
+    """TC-005: name, description, producer business name; icontains (case-insensitive)."""
+
+    def setUp(self):
+        super().setUp()
+        self.category_only_match_product = Product.objects.create(
+            producer=self.producer,
+            name="Plain Loaf",
+            description="Simple daily bread",
+            price=Decimal("2.00"),
+            category=self.category,
+            stock_quantity=5,
+            minimum_order_quantity=1,
+            lead_time_hours=48,
+            organic=False,
+            is_active=True,
+        )
+
+    def test_tc005_search_matches_name_description_producer_case_insensitive(self):
+        url = reverse("core:customer-product-list")
+        self.assertContains(self.client.get(url, {"q": "carrots"}), "Carrots")
+        self.assertContains(self.client.get(url, {"q": "CARROTS"}), "Carrots")
+        self.assertContains(self.client.get(url, {"q": "fresh"}), "Carrots")
+        self.assertContains(self.client.get(url, {"q": "organic"}), "Milk")
+        self.assertContains(self.client.get(url, {"q": "PRODUCER ONE"}), "Carrots")
+        self.assertContains(self.client.get(url, {"q": "producer one"}), "Plain Loaf")
+
+    def test_tc005_search_does_not_match_category_name(self):
+        url = reverse("core:customer-product-list")
+        response = self.client.get(url, {"q": "vegetables"})
+        self.assertNotContains(response, "Plain Loaf")
+        self.assertNotContains(response, "Carrots")
+
+    def test_search_strips_whitespace_from_query(self):
+        url = reverse("core:customer-product-list")
+        response = self.client.get(url, {"q": "  carrots  "})
+        self.assertContains(response, "<strong>Carrots</strong>")
+
+    def test_search_excludes_inactive_products(self):
+        Product.objects.create(
+            producer=self.producer,
+            name="Baby Carrots",
+            description="Young roots",
+            price=Decimal("2.20"),
+            category=self.category,
+            stock_quantity=8,
+            minimum_order_quantity=1,
+            lead_time_hours=48,
+            organic=False,
+            is_active=True,
+        )
+        self.product.is_active = False
+        self.product.save()
+        url = reverse("core:customer-product-list")
+        response = self.client.get(url, {"q": "carrots"})
+        self.assertContains(response, "<strong>Baby Carrots</strong>")
+        self.assertNotContains(response, "<strong>Carrots</strong>")
+
+
+class CustomerProductFilterDisplayTests(ProducerFeatureBase):
+    def test_tc014_organic_filter(self):
+        url = reverse("core:customer-product-list")
+        self.assertContains(self.client.get(url), "Carrots")
+        self.assertContains(self.client.get(url), "Milk")
+
+        organic_only = self.client.get(url, {"organic": "1"})
+        self.assertContains(organic_only, "<strong>Carrots</strong>")
+        self.assertNotContains(organic_only, "<strong>Milk</strong>")
+
+    def test_tc015_allergen_display_on_browse(self):
+        self.product.allergen_info = "Contains nuts and celery."
+        self.product.save()
+        response = self.client.get(reverse("core:customer-product-list"))
+        self.assertContains(response, "Contains nuts and celery.")
+        self.assertContains(response, "Allergen notice")
+
+    def test_allergen_exclusion_filter_excludes_matching_products(self):
+        self.product.allergen_info = "Contains nuts and celery."
+        self.product.save()
+        self.other_product.allergen_info = "Packed in a nut-free facility."
+        self.other_product.save()
+        url = reverse("core:customer-product-list")
+        response = self.client.get(url, {"exclude_allergen": ["nuts", "celery"]})
+        self.assertNotContains(response, "<strong>Carrots</strong>")
+        self.assertContains(response, "<strong>Milk</strong>")
+
+    def test_tc015_blank_allergen_shows_none_stated(self):
+        self.product.allergen_info = ""
+        self.product.save()
+        self.other_product.allergen_info = ""
+        self.other_product.save()
+        response = self.client.get(reverse("core:customer-product-list"))
+        self.assertContains(response, "None stated", count=2)
+
+    def test_browse_empty_state_when_search_matches_nothing(self):
+        url = reverse("core:customer-product-list")
+        response = self.client.get(url, {"q": "nonexistentproductxyz123"})
+        self.assertContains(response, "No products match your search or filters")
+        self.assertNotContains(response, "No products currently listed in this category.")
+
+    def test_browse_empty_state_when_no_active_products_in_catalog(self):
+        Product.objects.all().update(is_active=False)
+        url = reverse("core:customer-product-list")
+        response = self.client.get(url)
+        self.assertContains(response, "No products are available to browse right now.")
+        self.assertNotContains(response, "No products currently listed in this category.")
+
+
+class CustomerProductCombinedFilterTests(ProducerFeatureBase):
+    """Customer browse: search, category, organic, and allergen exclusion stack (AND)."""
+
+    def test_combined_search_and_organic(self):
+        url = reverse("core:customer-product-list")
+        match = self.client.get(url, {"q": "carrots", "organic": "1"})
+        self.assertContains(match, "<strong>Carrots</strong>")
+        empty = self.client.get(url, {"q": "milk", "organic": "1"})
+        self.assertContains(empty, "No products match your search or filters")
+        self.assertNotContains(empty, "<strong>Milk</strong>")
+
+    def test_combined_search_and_category(self):
+        url = reverse("core:customer-product-list")
+        match = self.client.get(url, {"q": "milk", "category": "dairy"})
+        self.assertContains(match, "<strong>Milk</strong>")
+        empty = self.client.get(url, {"q": "carrots", "category": "dairy"})
+        self.assertContains(empty, "No products match your search or filters")
+        self.assertNotContains(empty, "<strong>Carrots</strong>")
+
+    def test_combined_organic_and_allergen_exclusion(self):
+        self.product.allergen_info = ""
+        self.product.save()
+        self.other_product.allergen_info = "May contain nuts."
+        self.other_product.save()
+        url = reverse("core:customer-product-list")
+        response = self.client.get(url, {"organic": "1", "exclude_allergen": ["nuts"]})
+        self.assertContains(response, "<strong>Carrots</strong>")
+        self.assertNotContains(response, "<strong>Milk</strong>")
+
+    def test_combined_search_category_and_organic(self):
+        url = reverse("core:customer-product-list")
+        match = self.client.get(
+            url,
+            {"q": "fresh", "category": "vegetables", "organic": "1"},
+        )
+        self.assertContains(match, "<strong>Carrots</strong>")
+        empty = self.client.get(
+            url,
+            {"q": "fresh", "category": "dairy", "organic": "1"},
+        )
+        self.assertContains(empty, "No products match your search or filters")
+
+    def test_combined_search_and_allergen_exclusion(self):
+        self.product.allergen_info = "Contains walnuts."
+        self.product.save()
+        url = reverse("core:customer-product-list")
+        excluded = self.client.get(url, {"q": "carrots", "exclude_allergen": ["nuts"]})
+        self.assertContains(excluded, "No products match your search or filters")
+        self.assertNotContains(excluded, "<strong>Carrots</strong>")
+        still_shown = self.client.get(url, {"q": "milk", "exclude_allergen": ["nuts"]})
+        self.assertContains(still_shown, "<strong>Milk</strong>")
+
+
 class ProductCrudTests(ProducerFeatureBase):
     def test_product_list_only_shows_owner_products(self):
         self.client.force_login(self.producer_user)
@@ -488,6 +740,16 @@ class OrderWorkflowTests(ProducerFeatureBase):
         self.own_item.refresh_from_db()
         self.assertEqual(self.own_item.status, OrderItem.STATUS_PREPARING)
         self.assertEqual(self.own_item.producer_notes, "Packing for tomorrow morning.")
+
+    def test_customer_orders_reflect_line_item_status(self):
+        self.order.status = Order.STATUS_CONFIRMED
+        self.order.save()
+        self.own_item.status = OrderItem.STATUS_PREPARING
+        self.own_item.save()
+
+        self.client.force_login(self.customer_user)
+        response = self.client.get(reverse("core:customer-orders"))
+        self.assertContains(response, "Preparing")
 
     def test_order_detail_shows_food_miles(self):
         self.client.force_login(self.producer_user)

@@ -24,6 +24,37 @@ from .forms import (
 from .models import Order, OrderItem, Producer, ProducerContent, ProducerSettlement, Product, SurplusListing
 from .services import item_food_miles, order_item_requires_attention, sync_producer_settlements
 
+# Customer browse: exclude products whose allergen_info matches any keyword in selected groups (keyword-based).
+ALLERGEN_EXCLUSION_GROUPS = {
+    "gluten": ["gluten", "wheat", "barley", "rye", "oat"],
+    "milk": ["milk", "dairy", "lactose", "butter", "cream", "cheese", "yoghurt", "yogurt"],
+    "eggs": ["egg"],
+    "peanuts": ["peanut"],
+    "nuts": ["almond", "hazelnut", "walnut", "cashew", "pecan", "brazil nut", "macadamia", "pistachio", "nuts"],
+    "soya": ["soya", "soy"],
+    "celery": ["celery"],
+    "mustard": ["mustard"],
+    "sesame": ["sesame"],
+    "fish": ["fish"],
+    "crustaceans": ["crustacean", "prawn", "shrimp", "lobster", "crab"],
+    "molluscs": ["mollusc", "mussel", "oyster", "squid", "snail"],
+}
+
+ALLERGEN_EXCLUSION_CHOICES = [
+    ("gluten", "Gluten"),
+    ("milk", "Milk/dairy"),
+    ("eggs", "Eggs"),
+    ("peanuts", "Peanuts"),
+    ("nuts", "Tree nuts"),
+    ("soya", "Soya"),
+    ("celery", "Celery"),
+    ("mustard", "Mustard"),
+    ("sesame", "Sesame"),
+    ("fish", "Fish"),
+    ("crustaceans", "Crustaceans"),
+    ("molluscs", "Molluscs"),
+]
+
 
 class HomeView(TemplateView):
     template_name = "core/home.html"
@@ -522,11 +553,25 @@ class CustomerProductBrowseView(ListView):
             queryset = queryset.filter(
                 Q(name__icontains=query)
                 | Q(description__icontains=query)
-                | Q(category__name__icontains=query)
                 | Q(producer__business_name__icontains=query)
             )
         if category:
             queryset = queryset.filter(category__name__iexact=category)
+        if self.request.GET.get("organic") == "1":
+            queryset = queryset.filter(organic=True)
+
+        exclusion_keys = [
+            key
+            for key in self.request.GET.getlist("exclude_allergen")
+            if key in ALLERGEN_EXCLUSION_GROUPS
+        ]
+        if exclusion_keys:
+            allergen_match = Q()
+            for key in exclusion_keys:
+                for kw in ALLERGEN_EXCLUSION_GROUPS[key]:
+                    allergen_match |= Q(allergen_info__icontains=kw)
+            queryset = queryset.exclude(allergen_match)
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -553,8 +598,20 @@ class CustomerProductBrowseView(ListView):
             grouped[key].append(product)
 
         context["grouped_products"] = grouped
+        context["customer_browse_has_results"] = bool(products)
+        if products:
+            context["customer_browse_catalog_empty"] = False
+        else:
+            context["customer_browse_catalog_empty"] = not Product.objects.filter(is_active=True).exists()
         context["query"] = self.request.GET.get("q", "").strip()
         context["active_category"] = self.request.GET.get("category", "").strip().lower()
+        context["organic_only"] = self.request.GET.get("organic") == "1"
+        context["allergen_exclusion_choices"] = ALLERGEN_EXCLUSION_CHOICES
+        context["active_allergen_exclusions"] = [
+            key
+            for key in self.request.GET.getlist("exclude_allergen")
+            if key in ALLERGEN_EXCLUSION_GROUPS
+        ]
         context["category_keys"] = self.category_keys
         return context
 

@@ -46,6 +46,9 @@
                     <tr>
                         <td>
                             <strong>{{ item.product.name }}</strong>
+                            {% if item.product.organic %}
+                                <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                            {% endif %}
                             <p class="meta" style="margin: 0.35rem 0 0;">{{ item.price }} each</p>
                         </td>
                         <td>{{ item.quantity }}</td>

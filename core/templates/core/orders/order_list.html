@@ -15,14 +15,14 @@
                 <div class="actions space-between" style="margin-bottom: 0.75rem;">
                     <h3 style="margin: 0;">Order #{{ order.id }}</h3>
                     <span class="badge 
-                        {% if order.status == 'pending' %}badge-pending
-                        {% elif order.status == 'confirmed' %}badge-confirmed
-                        {% elif order.status == 'processing' %}badge-processing
-                        {% elif order.status == 'ready' %}badge-ready
-                        {% elif order.status == 'delivered' %}badge-delivered
-                        {% elif order.status == 'cancelled' %}badge-cancelled
+                        {% if order.customer_progress_badge_key == 'pending' %}badge-pending
+                        {% elif order.customer_progress_badge_key == 'confirmed' %}badge-confirmed
+                        {% elif order.customer_progress_badge_key == 'processing' %}badge-processing
+                        {% elif order.customer_progress_badge_key == 'ready' %}badge-ready
+                        {% elif order.customer_progress_badge_key == 'delivered' %}badge-delivered
+                        {% elif order.customer_progress_badge_key == 'cancelled' %}badge-cancelled
                         {% endif %}">
-                        {{ order.get_status_display }}
+                        {{ order.get_customer_progress_display }}
                     </span>
                 </div>
                 
