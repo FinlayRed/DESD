@@ -11,28 +11,54 @@
         </p>
     </div>
 
-    <form method="get" class="actions">
-        <input
-            type="text"
-            name="q"
-            placeholder="Search products, farms, or categories"
-            value="{{ query }}"
-            style="min-width: 280px;"
-        >
-        <select name="category">
-            <option value="">All categories</option>
-            {% for category_name in category_keys %}
-                <option value="{{ category_name }}" {% if active_category == category_name %}selected{% endif %}>
-                    {{ category_name|title }}
-                </option>
-            {% endfor %}
-        </select>
-        <button class="btn primary" type="submit">Search</button>
-        <a class="btn" href="{% url 'core:customer-product-list' %}">Clear</a>
+    <form method="get" class="browse-filters-form">
+        <div class="browse-filters-controls">
+            <input
+                type="search"
+                name="q"
+                placeholder="Search by product name, description, or producer"
+                value="{{ query }}"
+                autocomplete="off"
+            >
+            <select name="category" aria-label="Category">
+                <option value="">All categories</option>
+                {% for category_name in category_keys %}
+                    <option value="{{ category_name }}" {% if active_category == category_name %}selected{% endif %}>
+                        {{ category_name|title }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="checkbox-row">
+            <label>
+                <input type="checkbox" name="organic" value="1" {% if organic_only %}checked{% endif %} aria-label="Show organic products only">
+                Organic only
+            </label>
+        </div>
+        <fieldset class="allergen-exclusion-fieldset">
+            <legend>Exclude products that may contain</legend>
+            <p class="allergen-filter-note">
+                Hides products that may not be suitable for your needs. Allergen information is provided by individual producers and may not be complete or up to date - always check labels or ask the producer.
+            </p>
+            <div class="allergen-exclusion-grid">
+                {% for value, label in allergen_exclusion_choices %}
+                    <label>
+                        <input type="checkbox" name="exclude_allergen" value="{{ value }}"
+                            {% if value in active_allergen_exclusions %}checked{% endif %}>
+                        {{ label }}
+                    </label>
+                {% endfor %}
+            </div>
+        </fieldset>
+        <div class="browse-filters-actions">
+            <button class="btn primary" type="submit">Search</button>
+            <a class="btn" href="{% url 'core:customer-product-list' %}">Clear</a>
+        </div>
     </form>
 </div>
 
 <div class="stack" style="margin-top: 1rem;">
+    {% if customer_browse_has_results %}
     {% for category_name, products_in_category in grouped_products.items %}
         <div class="card">
             <div class="actions space-between">
@@ -48,6 +74,7 @@
                         <th>Farm Origin</th>
                         <th>Harvest / Availability</th>
                         <th>Season Status</th>
+                        <th>Allergens</th>
                         <th>Price</th>
                         <th>Stock</th>
                         <th>Basket</th>
@@ -57,7 +84,11 @@
                     {% for product in products_in_category %}
                         <tr>
                             <td>
-                                <strong>{{ product.name }}</strong><br>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.organic %}
+                                    <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                {% endif %}
+                                <br>
                                 <span class="lead">{{ product.description|truncatechars:90 }}</span>
                             </td>
                             <td>
@@ -78,6 +109,16 @@
                                 {% endif %}
                             </td>
                             <td>{{ product.seasonal_status }}</td>
+                            <td class="lead">
+                                {% if product.allergen_info %}
+                                    <div class="allergen-warning" role="alert">
+                                        <strong>Allergen notice</strong>
+                                        {{ product.allergen_info|linebreaksbr }}
+                                    </div>
+                                {% else %}
+                                    <span class="meta">None stated</span>
+                                {% endif %}
+                            </td>
                             <td>£{{ product.price }}</td>
                             <td>{{ product.stock_quantity }}</td>
                             <td>
@@ -107,6 +148,20 @@
             {% endif %}
         </div>
     {% endfor %}
+    {% else %}
+    <div class="card browse-empty-state" role="status">
+        {% if customer_browse_catalog_empty %}
+            <h2 style="margin-top: 0;">Nothing to browse yet</h2>
+            <p class="lead">No products are available to browse right now. Please check back later.</p>
+        {% else %}
+            <h2 style="margin-top: 0;">No products match your search or filters</h2>
+            <p class="lead">
+                Try a different search term, another category, or adjust your filters
+                (for example organic only or allergen exclusions).
+            </p>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <div class="card actions space-between">
         <span class="lead">Ready to review your selected items?</span>

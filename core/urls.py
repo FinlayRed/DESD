@@ -3,7 +3,9 @@ from django.urls import path, include
 
 from .views import (
     CustomerLoginView,
+    CustomerPasswordChangeView,
     CustomerProductBrowseView,
+    CustomerProfileUpdateView,
     CustomerRegisterView,
     HomeView,
     ProducerContentCreateView,
@@ -50,6 +52,8 @@ urlpatterns = [
     path("customer/checkout/", CheckoutView.as_view(), name="customer-checkout"),
     path("customer/login/", CustomerLoginView.as_view(), name="customer-login"),
     path("customer/register/", CustomerRegisterView.as_view(), name="customer-register"),
+    path("customer/profile/", CustomerProfileUpdateView.as_view(), name="customer-profile"),
+    path("customer/profile/password/", CustomerPasswordChangeView.as_view(), name="customer-password-change"),
     path("customer/logout/", user_logout_view, name="customer-logout"),
     path("cart/", CartView.as_view(), name="cart"),
     path("cart/add/<int:product_id>/", AddToCartView.as_view(), name="cart-add"),

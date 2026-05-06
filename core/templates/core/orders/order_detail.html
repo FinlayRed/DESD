@@ -7,14 +7,14 @@
     <div class="actions space-between">
         <h1 style="margin: 0;">Order #{{ order.id }}</h1>
         <span class="badge 
-            {% if order.status == 'pending' %}badge-pending
-            {% elif order.status == 'confirmed' %}badge-confirmed
-            {% elif order.status == 'processing' %}badge-processing
-            {% elif order.status == 'ready' %}badge-ready
-            {% elif order.status == 'delivered' %}badge-delivered
-            {% elif order.status == 'cancelled' %}badge-cancelled
+            {% if order.customer_progress_badge_key == 'pending' %}badge-pending
+            {% elif order.customer_progress_badge_key == 'confirmed' %}badge-confirmed
+            {% elif order.customer_progress_badge_key == 'processing' %}badge-processing
+            {% elif order.customer_progress_badge_key == 'ready' %}badge-ready
+            {% elif order.customer_progress_badge_key == 'delivered' %}badge-delivered
+            {% elif order.customer_progress_badge_key == 'cancelled' %}badge-cancelled
             {% endif %}" style="font-size: 1rem;">
-            {{ order.get_status_display }}
+            {{ order.get_customer_progress_display }}
         </span>
     </div>
 </div>
@@ -75,7 +75,10 @@
                     {% for item in vendor.items %}
                         <tr>
                             <td>
-                                {{ item.product.name }}
+                                <strong>{{ item.product.name }}</strong>
+                                {% if item.product.organic %}
+                                    <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                {% endif %}
                                 {% if item.product.allergen_info %}
                                     <br><small class="lead">Allergens: {{ item.product.allergen_info }}</small>
                                 {% endif %}

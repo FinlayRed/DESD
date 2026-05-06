@@ -263,7 +263,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   color: #fff;
-  background: rgba(40, 110, 240, 0.95);
+  background: #1f4d3f;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -272,12 +272,12 @@
 
 .form-actions .btn-primary:hover,
 .form-actions button.primary:hover {
-  background: #286ef0;
+  background: #174a3a;
 }
 
 .form-actions .btn-primary:focus,
 .form-actions button.primary:focus {
-  outline: 2px solid #286ef0;
+  outline: 2px solid #1f4d3f;
   outline-offset: 2px;
 }
 

@@ -53,7 +53,12 @@
                 <tbody>
                     {% for item in vendor.items %}
                         <tr>
-                            <td>{{ item.product.name }}</td>
+                            <td>
+                                <strong>{{ item.product.name }}</strong>
+                                {% if item.product.organic %}
+                                    <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                {% endif %}
+                            </td>
                             <td>{{ item.quantity }}</td>
                             <td>£{{ item.price }}</td>
                             <td>£{{ item.line_total }}</td>
