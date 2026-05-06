@@ -21,7 +21,7 @@ from .forms import (
     ProductForm,
     SurplusListingForm,
 )
-from .models import Order, OrderItem, Producer, ProducerContent, ProducerSettlement, Product, SurplusListing
+from .models import Category, Order, OrderItem, Producer, ProducerContent, ProducerSettlement, Product, SurplusListing
 from .services import item_food_miles, order_item_requires_attention, sync_producer_settlements
 
 # Customer browse: exclude products whose allergen_info matches any keyword in selected groups (keyword-based).
@@ -532,13 +532,7 @@ class CustomerProductBrowseView(ListView):
     template_name = "core/customer_product_list.html"
     context_object_name = "products"
 
-    category_keys = [
-        "vegetables",
-        "dairy",
-        "bakery",
-        "preserves",
-        "seasonal specialities",
-    ]
+    UNCATEGORISED_LABEL = "Uncategorised"
 
     def get_queryset(self):
         queryset = (
@@ -578,12 +572,10 @@ class CustomerProductBrowseView(ListView):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
         products = list(context["products"])
-        grouped = {key: [] for key in self.category_keys}
+        grouped = {}
 
         for product in products:
-            key = (product.category.name if product.category else "").strip().lower()
-            if key not in grouped:
-                continue
+            label = product.category.name if product.category else self.UNCATEGORISED_LABEL
             if product.available_from and product.available_to:
                 if product.available_from <= today <= product.available_to:
                     product.seasonal_status = "In season"
@@ -595,9 +587,14 @@ class CustomerProductBrowseView(ListView):
                 product.seasonal_status = "Upcoming season"
             else:
                 product.seasonal_status = "Seasonal dates not set"
-            grouped[key].append(product)
+            grouped.setdefault(label, []).append(product)
 
-        context["grouped_products"] = grouped
+        # Sort groups alphabetically; uncategorised last.
+        ordered = dict(
+            sorted(grouped.items(), key=lambda kv: (kv[0] == self.UNCATEGORISED_LABEL, kv[0].lower()))
+        )
+
+        context["grouped_products"] = ordered
         context["customer_browse_has_results"] = bool(products)
         if products:
             context["customer_browse_catalog_empty"] = False
@@ -612,7 +609,9 @@ class CustomerProductBrowseView(ListView):
             for key in self.request.GET.getlist("exclude_allergen")
             if key in ALLERGEN_EXCLUSION_GROUPS
         ]
-        context["category_keys"] = self.category_keys
+        context["category_keys"] = list(
+            Category.objects.order_by("name").values_list("name", flat=True)
+        )
         return context
 
 
