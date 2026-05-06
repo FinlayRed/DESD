@@ -1,12 +1,12 @@
 {% extends "core/base.html" %}
 
-{% block title %}Payment - Order #{{ order.id }}{% endblock %}
+{% block title %}Payment - {{ order.reference|default:order.id }}{% endblock %}
 
 {% block content %}
 <div class="page-intro">
     <div>
         <div class="eyebrow">Customer payment</div>
-        <h1>Payment for Order #{{ order.id }}</h1>
+        <h1>Payment for {{ order.reference|default:order.id }}</h1>
         <p>Complete your payment to confirm your order.</p>
     </div>
     <div class="chip-row">
