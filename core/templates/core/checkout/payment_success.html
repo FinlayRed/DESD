@@ -3,55 +3,79 @@
 {% block title %}Order Confirmed - {{ order.reference|default:order.id }}{% endblock %}
 
 {% block content %}
-<div class="card" style="text-align: center;">
-    <div style="font-size: 3rem; margin-bottom: 1rem;">✓</div>
-    <h1 style="margin-top: 0; color: #059669;">Order Confirmed!</h1>
-    <p class="lead">Thank you for supporting local Bristol producers.</p>
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer order</div>
+        <h1>Order confirmed</h1>
+        <p>Thank you for supporting local Bristol producers. Each supplier will now prepare and fulfil their part of your order.</p>
+    </div>
+    <div class="chip-row">
+        <span class="badge">{{ order.get_status_display }}</span>
+        {% if order.collection_date %}
+            <span class="badge">Collection {{ order.collection_date|date:"D, d M Y" }}</span>
+        {% endif %}
+        {% if order.delivery_postcode %}
+            <span class="badge">{{ order.delivery_postcode }}</span>
+        {% endif %}
+    </div>
 </div>
 
-<div class="card" style="margin-top: 1rem;">
-    <h2 style="margin-top: 0;">{{ order.reference|default:order.id }}</h2>
-    
-    <table>
-        <tbody>
-            <tr>
-                <td>Status</td>
-                <td style="text-align: right;">
-                    <span class="badge badge-confirmed">{{ order.get_status_display }}</span>
-                </td>
-            </tr>
-            <tr>
-                <td>Order Date</td>
-                <td style="text-align: right;">{{ order.created_at|date:"d M Y, H:i" }}</td>
-            </tr>
-            {% if order.collection_date %}
-            <tr>
-                <td>Collection Date</td>
-                <td style="text-align: right;"><strong>{{ order.collection_date|date:"D, d M Y" }}</strong></td>
-            </tr>
-            {% endif %}
-            {% if order.delivery_postcode %}
-            <tr>
-                <td>Delivery Postcode</td>
-                <td style="text-align: right;">{{ order.delivery_postcode }}</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
+<div class="stack">
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>{{ order.reference|default:order.id }}</h2>
+                <p class="meta">Placed on {{ order.created_at|date:"d M Y, H:i" }}.</p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <tbody>
+                    <tr>
+                        <th scope="row">Status</th>
+                        <td><span class="badge">{{ order.get_status_display }}</span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Order date</th>
+                        <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
+                    </tr>
+                    {% if order.collection_date %}
+                        <tr>
+                            <th scope="row">Collection date</th>
+                            <td><strong>{{ order.collection_date|date:"D, d M Y" }}</strong></td>
+                        </tr>
+                    {% endif %}
+                    {% if order.delivery_postcode %}
+                        <tr>
+                            <th scope="row">Delivery postcode</th>
+                            <td>{{ order.delivery_postcode }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>What happens next</h2>
+                <p class="meta">Four steps from confirmation to your kitchen.</p>
+            </div>
+        </div>
+
+        <ol class="list-reset">
+            <li class="list-item"><strong>1.</strong> Each producer receives the part of your order that belongs to them.</li>
+            <li class="list-item"><strong>2.</strong> They prepare and pack the items for collection or delivery.</li>
+            <li class="list-item"><strong>3.</strong> You're notified when each producer's items are ready.</li>
+            <li class="list-item"><strong>4.</strong> Collect from the producer or arrange delivery directly with them.</li>
+        </ol>
+    </article>
 </div>
 
-<div class="card" style="margin-top: 1rem; background: #ecfdf5; border-color: #a7f3d0;">
-    <h3 style="margin-top: 0; color: #065f46;">What Happens Next?</h3>
-    <ol style="color: #065f46; margin-bottom: 0;">
-        <li style="margin-bottom: 0.5rem;">Each producer will receive your order details</li>
-        <li style="margin-bottom: 0.5rem;">They will prepare your items for collection</li>
-        <li style="margin-bottom: 0.5rem;">You'll be notified when items are ready</li>
-        <li>Collect from the producer or arrange delivery</li>
-    </ol>
-</div>
-
-<div class="card actions space-between" style="margin-top: 1rem;">
-    <a href="{% url 'core:customer-product-list' %}" class="btn">Continue Shopping</a>
-    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary">View Order Details</a>
+<div class="actions" style="margin-top: 1.5rem;">
+    <a href="{% url 'core:customer-order-detail' pk=order.id %}" class="btn primary">View order details</a>
+    <a href="{% url 'core:customer-product-list' %}" class="btn">Continue shopping</a>
 </div>
 {% endblock %}

@@ -140,20 +140,54 @@ surplus, content, or any of the customer transaction pages.
 
 ---
 
-## Out of scope (deferred)
+## Follow-up commits
 
-These were called out in the consistency findings but not done in this
-pass:
+These items were deferred from the first cleanup commit and landed in
+follow-ups on the same branch:
 
-- **Payment success page** ([`payment_success.html`](../../core/templates/core/checkout/payment_success.html))
-  is still a custom centered layout outside the design language. Bigger
-  rewrite — wants its own commit.
-- **Order list reference rendering** — list shows `Order #3` (pk) instead
-  of `ORD-00003` (reference). Cosmetic content fix, not a design-language
-  issue.
-- **Settlement idempotency bug** — `ProducerDashboardView` will 500 if a
-  `SettlementEntry` ever exists without `OrderItem.settlement` being
-  backfilled. Surfaced by my seed script. Belongs in `core/services.py`.
+### Order references on customer-facing templates (commit `d3feb47`)
+
+`orders/order_list.html`, `orders/order_detail.html`, `checkout/payment.html`,
+and `checkout/payment_success.html` now render `{{ order.reference|default:order.id }}`.
+Customer order list now reads `ORD-00003` instead of `Order #3`, matching
+the producer side.
+
+| Before | After |
+|---|---|
+| ![Orders before](images/before/dashboard-typos.png) | ![Orders after](images/after/orders-reference.png) |
+
+### Settlement idempotency fix (commit `d3feb47`)
+
+`sync_producer_settlements` now uses `SettlementEntry.get_or_create` keyed
+on `order_item`, and reconciles `OrderItem.settlement` to the existing
+entry's settlement when they desync. Previously, an orphaned
+`SettlementEntry` would 500 the dashboard with a duplicate-key
+`IntegrityError` on every load. Verified by clearing
+`OrderItem.settlement` on linked items and reloading: the dashboard
+returns 200 and reconciles the link on the way through.
+
+![Dashboard after idempotency fix](images/after/dashboard-after-idempotency-fix.png)
+
+### Payment success page rewrite
+
+`payment_success.html` was a custom centered layout with a green
+checkmark, custom green headline, and a mint-green inline-styled "What
+Happens Next?" panel. Rewritten to use the same `.page-intro` +
+`<article class="card stack">` + `section-title` + `list-reset`
+structure every other customer page uses.
+
+| Before | After |
+|---|---|
+| ![Payment success before](images/before/payment-success.png) | ![Payment success after](images/after/payment-success.png) |
+
+---
+
+## Still deferred
+
 - **Dashboard `<p>Producer Dashboard</p>`** — the page-intro paragraph at
   [`dashboard.html:10`](../../core/templates/core/dashboard.html#L10)
   duplicates the eyebrow text immediately above it. Tiny tweak, optional.
+- **Customer browse category mismatch** — the customer browse view has a
+  hardcoded category list (`Vegetables, Dairy, Bakery, Preserves,
+  Seasonal Specialities`) that doesn't match the seeded categories
+  (`Fruit`, `Pantry` get hidden silently).
