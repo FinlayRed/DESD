@@ -70,5 +70,21 @@
     {% else %}
         <p class="empty-state">No producer orders yet.</p>
     {% endif %}
+
+    {% if is_paginated %}
+        <nav class="actions space-between" style="margin-top: 1rem;" aria-label="Order pages">
+            <div>
+                {% if page_obj.has_previous %}
+                    <a class="btn" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Previous</a>
+                {% endif %}
+            </div>
+            <span class="meta">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            <div>
+                {% if page_obj.has_next %}
+                    <a class="btn" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next</a>
+                {% endif %}
+            </div>
+        </nav>
+    {% endif %}
 </div>
 {% endblock %}

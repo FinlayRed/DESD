@@ -1,8 +1,10 @@
 import csv
+from io import StringIO
 from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -11,11 +13,13 @@ from .models import (
     Category,
     Order,
     OrderItem,
+    Payment,
     Producer,
     ProducerContent,
     ProducerSettlement,
     Product,
     SurplusListing,
+    TraceabilityRecord,
 )
 from .services import calculate_food_miles
 
@@ -727,6 +731,36 @@ class OrderWorkflowTests(ProducerFeatureBase):
         self.assertNotContains(response, "Milk")
         self.assertContains(response, "Under 48h")
 
+    def test_order_list_is_paginated(self):
+        for index in range(11):
+            order = Order.objects.create(
+                customer=self.customer_user,
+                paid=True,
+                customer_name="Local Buyer",
+                customer_email="buyer@example.com",
+                delivery_method=Order.DELIVERY_DELIVERY,
+                delivery_postcode="BS32 4AQ",
+                fulfilment_date=timezone.localdate() + timedelta(days=3),
+            )
+            OrderItem.objects.create(
+                order=order,
+                product=self.product,
+                quantity=1,
+                price=Decimal("1.99"),
+                status=OrderItem.STATUS_PENDING,
+            )
+
+        self.client.force_login(self.producer_user)
+        response = self.client.get(reverse("core:order-list"))
+
+        self.assertTrue(response.context["is_paginated"])
+        self.assertEqual(len(response.context["orders"]), 10)
+        self.assertContains(response, "Page 1 of 2")
+        self.assertContains(response, "Next")
+
+        page_two = self.client.get(reverse("core:order-list"), {"page": "2"})
+        self.assertEqual(len(page_two.context["orders"]), 2)
+
     def test_order_item_update_is_scoped_to_producer(self):
         self.client.force_login(self.producer_user)
         response = self.client.post(
@@ -758,6 +792,100 @@ class OrderWorkflowTests(ProducerFeatureBase):
 
         self.assertContains(response, "miles")
         self.assertEqual(calculate_food_miles("BS1 1AA", "BS32 4AQ"), Decimal("6.3"))
+
+
+class ProducerFlowIntegrationTests(ProducerFeatureBase):
+    def setUp(self):
+        super().setUp()
+        self.order = Order.objects.create(
+            customer=self.customer_user,
+            paid=True,
+            status=Order.STATUS_CONFIRMED,
+            customer_name="Local Buyer",
+            customer_email="buyer@example.com",
+            delivery_method=Order.DELIVERY_DELIVERY,
+            delivery_postcode="BS32 4AQ",
+            fulfilment_date=timezone.localdate() + timedelta(days=2),
+        )
+        self.item = OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=2,
+            price=Decimal("1.99"),
+            status=OrderItem.STATUS_PENDING,
+        )
+
+    def test_producer_can_review_and_update_their_order_item(self):
+        self.client.force_login(self.producer_user)
+
+        list_response = self.client.get(reverse("core:order-list"))
+        self.assertContains(list_response, self.order.reference)
+        self.assertContains(list_response, "Carrots")
+
+        detail_response = self.client.get(reverse("core:order-detail", kwargs={"pk": self.order.pk}))
+        self.assertContains(detail_response, "Carrots")
+        self.assertContains(detail_response, "Pending")
+
+        update_response = self.client.post(
+            reverse("core:order-item-update", kwargs={"pk": self.item.pk}),
+            {
+                "status": OrderItem.STATUS_PREPARING,
+                "producer_notes": "Packing this for collection.",
+            },
+        )
+        self.assertRedirects(update_response, reverse("core:order-detail", kwargs={"pk": self.order.pk}))
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.status, OrderItem.STATUS_PREPARING)
+        self.assertEqual(self.item.producer_notes, "Packing this for collection.")
+
+
+class CustomerFlowIntegrationTests(ProducerFeatureBase):
+    def test_customer_can_buy_product_and_see_order_progress(self):
+        self.client.force_login(self.customer_user)
+
+        browse_response = self.client.get(reverse("core:customer-product-list"))
+        self.assertContains(browse_response, "Carrots")
+
+        self.client.post(reverse("core:cart-add", kwargs={"product_id": self.product.pk}), {"quantity": "2"})
+        checkout_response = self.client.post(
+            reverse("core:checkout"),
+            {
+                "postcode": "BS32 4AQ",
+                "address": "1 Market Street",
+                "collection_date": (timezone.localdate() + timedelta(days=3)).isoformat(),
+            },
+        )
+
+        order = Order.objects.get(customer=self.customer_user, delivery_address="1 Market Street")
+        self.assertRedirects(checkout_response, reverse("core:payment", kwargs={"order_id": order.pk}))
+        self.assertEqual(order.items.count(), 1)
+        self.assertEqual(order.payment.total_amount, Decimal("3.98"))
+
+        success_response = self.client.get(reverse("core:payment-success", kwargs={"order_id": order.pk}))
+        self.assertEqual(success_response.status_code, 200)
+        order.refresh_from_db()
+        self.assertTrue(order.paid)
+        self.assertEqual(order.status, Order.STATUS_CONFIRMED)
+        self.assertEqual(order.payment.status, Payment.STATUS_COMPLETED)
+        self.assertEqual(TraceabilityRecord.objects.filter(order_item__order=order).count(), 1)
+
+        orders_response = self.client.get(reverse("core:customer-orders"))
+        self.assertContains(orders_response, order.reference)
+        self.assertContains(orders_response, "Pending")
+
+
+class SeedDemoDataCommandTests(TestCase):
+    def test_seed_demo_data_creates_demo_records(self):
+        out = StringIO()
+
+        call_command("seed_demo_data", stdout=out)
+
+        self.assertIn("Demo data created successfully", out.getvalue())
+        self.assertEqual(Producer.objects.count(), 3)
+        self.assertEqual(Product.objects.count(), 6)
+        self.assertEqual(Order.objects.count(), 3)
+        self.assertEqual(Payment.objects.count(), 3)
+        self.assertEqual(TraceabilityRecord.objects.count(), OrderItem.objects.count())
 
 
 class SettlementTests(ProducerFeatureBase):
