@@ -650,6 +650,9 @@
                 <a href="{% url 'core:customer-product-list' %}">Browse produce</a>
                 <a href="{% url 'core:cart' %}">Basket</a>
                 {% if user.is_authenticated %}
+                    {% if user.is_staff %}
+                        <a href="{% url 'admin_reports:financial-dashboard' %}">Admin reports</a>
+                    {% endif %}
                     {% if user.producer %}
                         <a href="{% url 'core:dashboard' %}">Dashboard</a>
                         <a href="{% url 'core:product-list' %}">Products</a>
