@@ -1,0 +1,48 @@
+{% extends "core/base.html" %}
+
+{% block title %}Review {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Write a review</div>
+        <h1>{{ product.name }}</h1>
+        <p class="meta">From {{ product.producer.business_name }}</p>
+    </div>
+    <div class="chip-row">
+        <a class="btn secondary" href="{% url 'core:customer-product-detail' product.id %}">Cancel</a>
+    </div>
+</div>
+
+<article class="card stack">
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="allergen-warning" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="form-field">
+            <label><strong>Your rating</strong></label>
+            <div class="chip-row">
+                {{ form.rating }}
+            </div>
+            {% if form.rating.errors %}<p class="meta" style="color: #b00;">{{ form.rating.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.comment.id_for_label }}"><strong>Your review (optional)</strong></label>
+            {{ form.comment }}
+            <p class="meta">{{ form.comment.help_text }}</p>
+            {% if form.comment.errors %}<p class="meta" style="color: #b00;">{{ form.comment.errors|striptags }}</p>{% endif %}
+        </div>
+
+        <div class="actions">
+            <button class="btn primary" type="submit">Submit review</button>
+            <a class="btn secondary" href="{% url 'core:customer-product-detail' product.id %}">Cancel</a>
+        </div>
+    </form>
+</article>
+{% endblock %}

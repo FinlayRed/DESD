@@ -1,0 +1,158 @@
+{% extends "core/base.html" %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer checkout</div>
+        <h1>Checkout</h1>
+        <p>Review your basket and confirm your delivery or collection details.</p>
+    </div>
+    <div class="chip-row">
+        <a class="btn secondary" href="{% url 'core:cart' %}">Back to Basket</a>
+    </div>
+</div>
+
+{% if cart and items_by_producer %}
+    <article class="card stack">
+        <div class="section-title">
+            <div>
+                <h2>Order type</h2>
+                {% if is_multi_vendor %}
+                    <p>Multi-vendor order &mdash; your basket includes products from {{ producer_count }} suppliers. Each supplier manages their own delivery or collection.</p>
+                {% else %}
+                    <p>Single-vendor order &mdash; all items are from one supplier. Delivery or collection will be coordinated directly with the producer.</p>
+                {% endif %}
+            </div>
+            <div class="chip-row">
+                {% if is_multi_vendor %}
+                    <span class="badge">Multi-vendor</span>
+                {% else %}
+                    <span class="badge">Single-vendor</span>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+
+    <div class="stack" style="margin-top: 1rem;">
+        {% for producer_id, vendor in items_by_producer.items %}
+            <article class="card stack">
+                <div class="section-title">
+                    <div>
+                        <h2>{{ vendor.producer.business_name }}</h2>
+                        <p class="meta">Farm postcode: {{ vendor.producer.postcode }}</p>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Unit Price</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in vendor.items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.product.name }}</strong>
+                                        {% if item.product.organic %}
+                                            <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                        {% endif %}
+                                        {% if item.product.allergen_info %}
+                                            <p class="meta" style="margin: 0.3rem 0 0;"><strong>Allergens:</strong> {{ item.product.allergen_info }}</p>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>£{{ item.price }}</td>
+                                    <td>£{{ item.total_price }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3"><strong>Supplier Subtotal</strong></td>
+                                <td><strong>£{{ vendor.subtotal }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <p class="meta">This producer will confirm availability, packaging, and delivery or collection details for your items.</p>
+            </article>
+        {% endfor %}
+    </div>
+
+    <form method="post" id="checkout-form" style="margin-top: 1rem;">
+        {% csrf_token %}
+
+        <div class="minimal-form-wrap">
+            <div class="minimal-form">
+                <div class="minimal-form-header">
+                    <h1>Collection details</h1>
+                    <p>Tell us where you'd like your order to be delivered or collected from.</p>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="form-section-title">Delivery information</h3>
+
+                    <div class="form-field">
+                        <label for="postcode">Your postcode <span class="required">*</span></label>
+                        <input type="text" id="postcode" name="postcode" placeholder="e.g., BS1 4DJ" required>
+                        <p class="field-help">Used to calculate food miles for environmental reporting.</p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="address">Delivery address <span class="optional">(optional)</span></label>
+                        <textarea id="address" name="address" placeholder="Full delivery address if applicable"></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="collection_date">Preferred collection date <span class="required">*</span></label>
+                        <input type="date" id="collection_date" name="collection_date" min="{{ min_collection_date|date:'Y-m-d' }}" required>
+                        <p class="field-help">
+                            <span class="badge alert">48-hour lead time required</span>
+                            Earliest available date: <strong>{{ min_collection_date|date:'D, d M Y' }}</strong>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn primary">Proceed to Payment</button>
+                    <a href="{% url 'core:cart' %}" class="btn secondary">Back to Basket</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <section class="grid three" style="margin-top: 1rem;">
+        <article class="stat-card">
+            <span class="eyebrow">Items</span>
+            <span class="stat-value">{{ cart|length }}</span>
+            <p class="meta">Line item{{ cart|length|pluralize }}</p>
+        </article>
+        <article class="stat-card">
+            <span class="eyebrow">Network commission</span>
+            <span class="stat-value">£{{ network_commission }}</span>
+            <p class="meta">5% supports the BRFN platform.</p>
+        </article>
+        <article class="stat-card">
+            <span class="eyebrow">Order total</span>
+            <span class="stat-value">£{{ total }}</span>
+            <p class="meta">Producers receive £{{ producer_total }}.</p>
+        </article>
+    </section>
+
+{% else %}
+    <article class="card stack">
+        <p class="empty-state">Your basket is empty.</p>
+        <div class="actions">
+            <a class="btn primary" href="{% url 'core:customer-product-list' %}">Browse Products</a>
+        </div>
+    </article>
+{% endif %}
+{% endblock %}

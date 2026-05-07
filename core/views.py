@@ -1,22 +1,63 @@
+import csv
+
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Prefetch, Q
-from django.shortcuts import redirect
+from django.contrib.auth.views import PasswordChangeView
+from django.db.models import OuterRef, Prefetch, Q, Subquery
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_POST
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView
 
 from .forms import (
+    CustomerLoginForm,
+    CustomerProfileForm,
+    CustomerRegisterForm,
     ProducerContentForm,
     ProducerLoginForm,
     ProducerOrderItemForm,
     ProducerProfileForm,
     ProducerRegisterForm,
     ProductForm,
+    ReviewForm,
     SurplusListingForm,
 )
-from .models import Order, OrderItem, Producer, ProducerContent, ProducerSettlement, Product, SurplusListing
+from .models import Category, Order, OrderItem, Producer, ProducerContent, ProducerSettlement, Product, Review, SurplusListing
 from .services import item_food_miles, order_item_requires_attention, sync_producer_settlements
+
+# Customer browse: exclude products whose allergen_info matches any keyword in selected groups (keyword-based).
+ALLERGEN_EXCLUSION_GROUPS = {
+    "gluten": ["gluten", "wheat", "barley", "rye", "oat"],
+    "milk": ["milk", "dairy", "lactose", "butter", "cream", "cheese", "yoghurt", "yogurt"],
+    "eggs": ["egg"],
+    "peanuts": ["peanut"],
+    "nuts": ["almond", "hazelnut", "walnut", "cashew", "pecan", "brazil nut", "macadamia", "pistachio", "nuts"],
+    "soya": ["soya", "soy"],
+    "celery": ["celery"],
+    "mustard": ["mustard"],
+    "sesame": ["sesame"],
+    "fish": ["fish"],
+    "crustaceans": ["crustacean", "prawn", "shrimp", "lobster", "crab"],
+    "molluscs": ["mollusc", "mussel", "oyster", "squid", "snail"],
+}
+
+ALLERGEN_EXCLUSION_CHOICES = [
+    ("gluten", "Gluten"),
+    ("milk", "Milk/dairy"),
+    ("eggs", "Eggs"),
+    ("peanuts", "Peanuts"),
+    ("nuts", "Tree nuts"),
+    ("soya", "Soya"),
+    ("celery", "Celery"),
+    ("mustard", "Mustard"),
+    ("sesame", "Sesame"),
+    ("fish", "Fish"),
+    ("crustaceans", "Crustaceans"),
+    ("molluscs", "Molluscs"),
+]
 
 
 class HomeView(TemplateView):
@@ -35,6 +76,21 @@ class ProducerAccessMixin(LoginRequiredMixin):
         except Producer.DoesNotExist:
             messages.error(request, "Please register as a producer to access the producer workspace.")
             return redirect("core:producer-register")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CustomerAccessMixin(LoginRequiredMixin):
+    login_url = "/customer/login/"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if Producer.objects.filter(user=request.user).exists():
+            messages.error(
+                request,
+                "Producer accounts should manage their profile from the producer workspace.",
+            )
+            return redirect("core:dashboard")
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -73,6 +129,61 @@ class ProducerRegisterView(FormView):
         login(self.request, user)
         messages.success(self.request, "Producer account created. You can now list products and manage orders.")
         return super().form_valid(form)
+
+class CustomerLoginView(FormView):
+    template_name = "core/customer_login.html"
+    form_class = CustomerLoginForm
+    success_url = reverse_lazy("core:customer-product-list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        login(self.request, form.get_user())
+        return super().form_valid(form)
+
+
+class CustomerRegisterView(FormView):
+    template_name = "core/customer_register.html"
+    form_class = CustomerRegisterForm
+    success_url = reverse_lazy("core:customer-product-list")
+
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)
+        return super().form_valid(form)
+
+
+class CustomerProfileUpdateView(CustomerAccessMixin, UpdateView):
+    model = get_user_model()
+    form_class = CustomerProfileForm
+    template_name = "core/customer_profile_form.html"
+    success_url = reverse_lazy("core:customer-profile")
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, "Your profile was updated.")
+        return super().form_valid(form)
+
+
+class CustomerPasswordChangeView(CustomerAccessMixin, PasswordChangeView):
+    template_name = "core/customer_password_change.html"
+    success_url = reverse_lazy("core:customer-profile")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Your password was updated.")
+        return super().form_valid(form)
+
+
+@require_POST
+def user_logout_view(request):
+    logout(request)
+    return redirect("core:home")
+
 
 
 class ProducerDashboardView(ProducerAccessMixin, TemplateView):
@@ -133,7 +244,6 @@ class ProducerDashboardView(ProducerAccessMixin, TemplateView):
             }
         )
         return context
-
 
 class ProducerProfileUpdateView(ProducerAccessMixin, UpdateView):
     model = Producer
@@ -231,6 +341,7 @@ class ProducerOrderListView(ProducerAccessMixin, ListView):
     model = Order
     template_name = "core/order_list.html"
     context_object_name = "orders"
+    paginate_by = 10
 
     def get_queryset(self):
         status = self.request.GET.get("status", "").strip()
@@ -323,6 +434,49 @@ class ProducerSettlementDetailView(ProducerAccessMixin, DetailView):
             "entries__order_item__product",
             "entries__order_item__order",
         )
+
+
+class ProducerSettlementCsvExportView(ProducerSettlementDetailView):
+    def get(self, request, *args, **kwargs):
+        settlement = self.get_object()
+        filename = f"producer_settlement_{settlement.week_start:%Y%m%d}_{settlement.week_end:%Y%m%d}.csv"
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "Settlement Week Start",
+            "Settlement Week End",
+            "Status",
+            "Order Reference",
+            "Order Date",
+            "Product",
+            "Quantity",
+            "Unit Price (GBP)",
+            "Gross Amount (GBP)",
+            "Commission Amount (GBP)",
+            "Net Amount (GBP)",
+        ])
+
+        for entry in settlement.entries.all():
+            order_item = entry.order_item
+            order = order_item.order
+            writer.writerow([
+                settlement.week_start.isoformat(),
+                settlement.week_end.isoformat(),
+                settlement.get_status_display(),
+                order.reference or f"ORD-{order.pk:05d}",
+                timezone.localtime(order.created_at).strftime("%Y-%m-%d %H:%M"),
+                order_item.product.name,
+                order_item.quantity,
+                f"{order_item.price:.2f}",
+                f"{entry.gross_amount:.2f}",
+                f"{entry.commission_amount:.2f}",
+                f"{entry.net_amount:.2f}",
+            ])
+
+        return response
 
 
 class ProducerSurplusListView(ProducerAccessMixin, ListView):
@@ -419,3 +573,241 @@ class ProducerContentDeleteView(ProducerAccessMixin, DeleteView):
     def form_valid(self, form):
         messages.success(self.request, "Producer content deleted.")
         return super().form_valid(form)
+
+
+class CustomerProductBrowseView(ListView):
+    model = Product
+    template_name = "core/customer_product_list.html"
+    context_object_name = "products"
+
+    UNCATEGORISED_LABEL = "Uncategorised"
+
+    def get_queryset(self):
+        active_surplus = SurplusListing.objects.filter(
+            product=OuterRef("pk"),
+            is_active=True,
+            available_until__gte=timezone.now(),
+        ).order_by("available_until")
+        queryset = (
+            Product.objects.filter(is_active=True)
+            .annotate(
+                active_surplus_discount=Subquery(active_surplus.values("discount_percent")[:1]),
+                active_surplus_price=Subquery(active_surplus.values("discounted_price")[:1]),
+            )
+            .select_related("producer", "category")
+            .order_by("name")
+        )
+        query = self.request.GET.get("q", "").strip()
+        category = self.request.GET.get("category", "").strip().lower()
+
+        if query:
+            queryset = queryset.filter(
+                Q(name__icontains=query)
+                | Q(description__icontains=query)
+                | Q(producer__business_name__icontains=query)
+            )
+        if category:
+            queryset = queryset.filter(category__name__iexact=category)
+        if self.request.GET.get("organic") == "1":
+            queryset = queryset.filter(organic=True)
+
+        exclusion_keys = [
+            key
+            for key in self.request.GET.getlist("exclude_allergen")
+            if key in ALLERGEN_EXCLUSION_GROUPS
+        ]
+        if exclusion_keys:
+            allergen_match = Q()
+            for key in exclusion_keys:
+                for kw in ALLERGEN_EXCLUSION_GROUPS[key]:
+                    allergen_match |= Q(allergen_info__icontains=kw)
+            queryset = queryset.exclude(allergen_match)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        products = list(context["products"])
+        grouped = {}
+
+        for product in products:
+            label = product.category.name if product.category else self.UNCATEGORISED_LABEL
+            if product.available_from and product.available_to:
+                if product.available_from <= today <= product.available_to:
+                    product.seasonal_status = "In season"
+                elif today < product.available_from:
+                    product.seasonal_status = "Upcoming season"
+                else:
+                    product.seasonal_status = "Out of season"
+            elif product.available_from and today < product.available_from:
+                product.seasonal_status = "Upcoming season"
+            else:
+                product.seasonal_status = "Seasonal dates not set"
+            grouped.setdefault(label, []).append(product)
+
+        # Sort groups alphabetically; uncategorised last.
+        ordered = dict(
+            sorted(grouped.items(), key=lambda kv: (kv[0] == self.UNCATEGORISED_LABEL, kv[0].lower()))
+        )
+
+        context["grouped_products"] = ordered
+        context["customer_browse_has_results"] = bool(products)
+        if products:
+            context["customer_browse_catalog_empty"] = False
+        else:
+            context["customer_browse_catalog_empty"] = not Product.objects.filter(is_active=True).exists()
+        context["query"] = self.request.GET.get("q", "").strip()
+        context["active_category"] = self.request.GET.get("category", "").strip().lower()
+        context["organic_only"] = self.request.GET.get("organic") == "1"
+        context["allergen_exclusion_choices"] = ALLERGEN_EXCLUSION_CHOICES
+        context["active_allergen_exclusions"] = [
+            key
+            for key in self.request.GET.getlist("exclude_allergen")
+            if key in ALLERGEN_EXCLUSION_GROUPS
+        ]
+        context["category_keys"] = list(
+            Category.objects.order_by("name").values_list("name", flat=True)
+        )
+        return context
+
+
+class CustomerCheckoutView(TemplateView):
+    template_name = "core/customer_checkout.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        selected_ids = [value for value in self.request.GET.getlist("items") if value.isdigit()]
+        selected_products = list(
+            Product.objects.filter(pk__in=selected_ids, is_active=True)
+            .select_related("producer", "category")
+            .order_by("producer__business_name", "name")
+        )
+
+        vendor_groups = {}
+        for product in selected_products:
+            vendor_key = product.producer_id
+            if vendor_key not in vendor_groups:
+                vendor_groups[vendor_key] = {"producer": product.producer, "items": []}
+            vendor_groups[vendor_key]["items"].append(product)
+
+        context["selected_products"] = selected_products
+        context["vendor_groups"] = list(vendor_groups.values())
+        context["is_multi_vendor"] = len(vendor_groups) > 1
+        return context
+
+
+class ProductDetailView(DetailView):
+    """
+    Customer-facing single-product page that lists average rating and
+    existing reviews.  TC-024.
+    """
+
+    model = Product
+    template_name = "core/customer_product_detail.html"
+    context_object_name = "product"
+
+    def get_queryset(self):
+        return Product.objects.filter(is_active=True).select_related(
+            "producer", "category"
+        )
+
+    def get_context_data(self, **kwargs):
+        from django.db.models import Avg, Count
+
+        context = super().get_context_data(**kwargs)
+        product = self.object
+        reviews = (
+            product.reviews.select_related("customer")
+            .order_by("-created_at")
+        )
+        aggregate = product.reviews.aggregate(
+            average=Avg("rating"), total=Count("id")
+        )
+        average = aggregate["average"]
+        context["reviews"] = reviews
+        context["review_count"] = aggregate["total"] or 0
+        context["average_rating"] = round(average, 1) if average is not None else None
+        # Whole and half-star fragments for visual rendering.
+        if average is not None:
+            full = int(average)
+            half = 1 if (average - full) >= 0.5 else 0
+            context["stars_full"] = range(full)
+            context["stars_half"] = half
+            context["stars_empty"] = range(5 - full - half)
+        else:
+            context["stars_full"] = range(0)
+            context["stars_half"] = 0
+            context["stars_empty"] = range(5)
+
+        # Has the logged-in customer bought this and not yet reviewed it?
+        reviewable_item = None
+        if self.request.user.is_authenticated:
+            reviewable_item = (
+                OrderItem.objects.filter(
+                    order__customer=self.request.user,
+                    order__paid=True,
+                    product=product,
+                    review__isnull=True,
+                )
+                .order_by("-order__created_at")
+                .first()
+            )
+        context["reviewable_item"] = reviewable_item
+        return context
+
+
+class ReviewCreateView(LoginRequiredMixin, CreateView):
+    """
+    TC-024.  Lets the customer leave a review for a product they have
+    actually bought (verified-purchase).  Uniqueness is enforced by the
+    OneToOne field on Review.order_item - they can review each
+    purchased item once.
+    """
+
+    form_class = ReviewForm
+    template_name = "core/review_form.html"
+    login_url = "/customer/login/"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.product = get_object_or_404(Product, pk=kwargs["product_id"], is_active=True)
+        if request.user.is_authenticated:
+            self.order_item = (
+                OrderItem.objects.filter(
+                    order__customer=request.user,
+                    order__paid=True,
+                    product=self.product,
+                    review__isnull=True,
+                )
+                .order_by("-order__created_at")
+                .first()
+            )
+            if self.order_item is None:
+                messages.error(
+                    request,
+                    "You can only review products you have purchased.",
+                )
+                return redirect("core:customer-product-detail", pk=self.product.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["customer"] = self.request.user
+        kwargs["order_item"] = self.order_item
+        kwargs["product"] = self.product
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["product"] = self.product
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Thanks for your review!")
+        return response
+
+    def get_success_url(self):
+        from django.urls import reverse
+
+        return reverse("core:customer-product-detail", kwargs={"pk": self.product.pk})

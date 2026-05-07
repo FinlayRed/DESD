@@ -1,0 +1,131 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ order.reference|default:order.id }}{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer order</div>
+        <h1>{{ order.reference|default:order.id }}</h1>
+        <p>Placed on {{ order.created_at|date:"d M Y, H:i" }}.</p>
+    </div>
+    <div class="chip-row">
+        <span class="badge
+            {% if order.customer_progress_badge_key == 'pending' %}badge-pending
+            {% elif order.customer_progress_badge_key == 'confirmed' %}badge-confirmed
+            {% elif order.customer_progress_badge_key == 'processing' %}badge-processing
+            {% elif order.customer_progress_badge_key == 'ready' %}badge-ready
+            {% elif order.customer_progress_badge_key == 'delivered' %}badge-delivered
+            {% elif order.customer_progress_badge_key == 'cancelled' %}badge-cancelled
+            {% endif %}">
+            {{ order.get_customer_progress_display }}
+        </span>
+    </div>
+</div>
+
+<article class="card stack">
+    <div class="section-title">
+        <div>
+            <h2>Order information</h2>
+            <p class="meta">Delivery and collection details for this order.</p>
+        </div>
+    </div>
+
+    <ul class="list-reset">
+        <li class="list-item">
+            <strong>Order date</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.created_at|date:"d M Y, H:i" }}</p>
+        </li>
+        {% if order.collection_date %}
+        <li class="list-item">
+            <strong>Collection date</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.collection_date|date:"D, d M Y" }}</p>
+        </li>
+        {% endif %}
+        {% if order.delivery_postcode %}
+        <li class="list-item">
+            <strong>Delivery postcode</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.delivery_postcode }}</p>
+        </li>
+        {% endif %}
+        {% if order.delivery_address %}
+        <li class="list-item">
+            <strong>Delivery address</strong>
+            <p class="meta" style="margin: 0.3rem 0 0;">{{ order.delivery_address }}</p>
+        </li>
+        {% endif %}
+    </ul>
+</article>
+
+<div class="stack" style="margin-top: 1rem;">
+    {% for producer_id, vendor in items_by_producer.items %}
+        <article class="card stack">
+            <div class="section-title">
+                <div>
+                    <h2>{{ vendor.producer.business_name }}</h2>
+                    <p class="meta">{{ vendor.producer.postcode }}</p>
+                </div>
+                <div class="chip-row">
+                    {% if vendor.producer.organic %}
+                        <span class="badge badge-organic">Organic producer</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
+                            <th>Food miles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in vendor.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong>
+                                    {% if item.product.organic %}
+                                        <span class="badge badge-organic" style="margin-left: 0.35rem;">Organic</span>
+                                    {% endif %}
+                                    {% if item.product.allergen_info %}
+                                        <p class="meta" style="margin: 0.3rem 0 0;"><strong>Allergens:</strong> {{ item.product.allergen_info }}</p>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>£{{ item.price }}</td>
+                                <td>£{{ item.line_total }}</td>
+                                <td>
+                                    {% if item.traceability_record %}
+                                        <span class="badge">{{ item.traceability_record.food_miles }} miles</span>
+                                    {% else %}
+                                        <span class="meta">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Supplier Subtotal</strong></td>
+                            <td colspan="2"><strong>£{{ vendor.subtotal }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <p class="meta">Contact this producer directly to arrange collection or delivery.</p>
+        </article>
+    {% endfor %}
+</div>
+
+<section class="grid two" style="margin-top: 1rem;">
+    <article class="stat-card">
+        <span class="eyebrow">Subtotal</span>
+        <span class="stat-value">£{{ order.total_amount }}</span>
+    </article>
+</section>
+{% endblock %}

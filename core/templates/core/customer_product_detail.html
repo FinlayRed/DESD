@@ -1,0 +1,109 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Product</div>
+        <h1>{{ product.name }}</h1>
+        <p class="meta">From {{ product.producer.business_name }} ({{ product.producer.postcode }})</p>
+    </div>
+    <div class="chip-row">
+        <a class="btn secondary" href="{% url 'core:customer-product-list' %}">Back to browse</a>
+        <a class="btn primary" href="{% url 'core:cart' %}">View basket</a>
+    </div>
+</div>
+
+<article class="card stack">
+    <div class="section-title">
+        <div>
+            <h2>About this product</h2>
+        </div>
+        <div class="chip-row">
+            {% if product.organic %}
+                <span class="badge badge-organic">Organic</span>
+            {% endif %}
+            {% if average_rating %}
+                <span class="badge">{{ average_rating }} / 5 &middot; {{ review_count }} review{{ review_count|pluralize }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <p>{{ product.description }}</p>
+
+    <ul class="list-reset">
+        <li class="list-item"><strong>Price</strong><p class="meta" style="margin: 0.3rem 0 0;">£{{ product.price }}</p></li>
+        <li class="list-item"><strong>Stock</strong><p class="meta" style="margin: 0.3rem 0 0;">{{ product.stock_quantity }}</p></li>
+        <li class="list-item"><strong>Availability</strong><p class="meta" style="margin: 0.3rem 0 0;">{{ product.available_window }}</p></li>
+        {% if product.farm_origin %}
+            <li class="list-item"><strong>Farm origin</strong><p class="meta" style="margin: 0.3rem 0 0;">{{ product.farm_origin }}</p></li>
+        {% endif %}
+    </ul>
+
+    {% if product.allergen_info %}
+        <div class="allergen-warning" role="alert">
+            <strong>Allergen notice</strong>
+            {{ product.allergen_info|linebreaksbr }}
+        </div>
+    {% endif %}
+
+    {% if product.stock_quantity > 0 %}
+        <form method="post" action="{% url 'core:cart-add' product.id %}" class="actions">
+            {% csrf_token %}
+            <input type="number" name="quantity"
+                   value="{{ product.minimum_order_quantity }}"
+                   min="{{ product.minimum_order_quantity }}"
+                   max="{{ product.stock_quantity }}"
+                   style="width: 5rem;">
+            <button class="btn primary" type="submit">Add to basket</button>
+        </form>
+    {% else %}
+        <span class="badge alert">Out of stock</span>
+    {% endif %}
+</article>
+
+<article class="card stack" style="margin-top: 1rem;">
+    <div class="section-title">
+        <div>
+            <h2>Customer reviews</h2>
+            {% if average_rating %}
+                <p class="meta">
+                    {% for _ in stars_full %}&#9733;{% endfor %}{% if stars_half %}&#189;{% endif %}{% for _ in stars_empty %}&#9734;{% endfor %}
+                    &middot; {{ average_rating }} from {{ review_count }} review{{ review_count|pluralize }}
+                </p>
+            {% else %}
+                <p class="meta">No reviews yet. Be the first to share your experience.</p>
+            {% endif %}
+        </div>
+        {% if reviewable_item %}
+            <div class="chip-row">
+                <a class="btn primary" href="{% url 'core:review-create' product.id %}">Write a review</a>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if reviews %}
+        <ul class="list-reset">
+            {% for review in reviews %}
+                <li class="list-item">
+                    <div class="chip-row" style="margin-bottom: 0.3rem;">
+                        <strong>
+                            {% for _ in ""|ljust:review.rating %}&#9733;{% endfor %}
+                            {% for _ in ""|ljust:5|slice:review.rating %}&#9734;{% endfor %}
+                        </strong>
+                        <span class="meta">
+                            {{ review.customer.get_full_name|default:review.customer.username }}
+                            &middot; {{ review.created_at|date:"d M Y" }}
+                            <span class="badge">Verified purchase</span>
+                        </span>
+                    </div>
+                    {% if review.comment %}
+                        <p>{{ review.comment|linebreaksbr }}</p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</article>
+{% endblock %}

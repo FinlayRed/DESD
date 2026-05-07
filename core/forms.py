@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import OrderItem, Producer, ProducerContent, Product, SurplusListing
+from .models import OrderItem, Producer, ProducerContent, Product, Review, SurplusListing
 
 
 User = get_user_model()
@@ -84,6 +84,111 @@ class ProducerRegisterForm(UserCreationForm):
                 postcode=self.cleaned_data["postcode"],
                 organic=self.cleaned_data["organic"],
             )
+        return user
+
+
+class CustomerLoginForm(forms.Form):
+    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput)
+
+    error_messages = {
+        "invalid_login": "Please enter a correct email and password.",
+        "is_producer": "This account is registered as a producer. Please use producer login.",
+    }
+
+    def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+        self.user_cache = None
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get("email")
+        password = cleaned_data.get("password")
+
+        if email and password:
+            user = User.objects.filter(email__iexact=email).first()
+            if user is None:
+                raise forms.ValidationError(self.error_messages["invalid_login"])
+
+            self.user_cache = authenticate(
+                self.request,
+                username=user.get_username(),
+                password=password,
+            )
+
+            if self.user_cache is None:
+                raise forms.ValidationError(self.error_messages["invalid_login"])
+
+            if Producer.objects.filter(user=self.user_cache).exists():
+                raise forms.ValidationError(self.error_messages["is_producer"])
+
+        return cleaned_data
+
+    def get_user(self):
+        return self.user_cache
+
+
+class CustomerRegisterForm(UserCreationForm):
+    email = forms.EmailField()
+    first_name = forms.CharField(
+        max_length=150,
+        required=True,
+        strip=True,
+        widget=forms.TextInput(attrs={"autocomplete": "given-name"}),
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=True,
+        strip=True,
+        widget=forms.TextInput(attrs={"autocomplete": "family-name"}),
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("email", "first_name", "last_name")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if User.objects.filter(email__iexact=email).exists() or User.objects.filter(username__iexact=email).exists():
+            raise forms.ValidationError("An account with this email already exists.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        email = self.cleaned_data["email"]
+        user.email = email
+        user.username = email
+        user.first_name = self.cleaned_data["first_name"].strip()
+        user.last_name = self.cleaned_data["last_name"].strip()
+        if commit:
+            user.save()
+        return user
+
+
+class CustomerProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("email", "first_name", "last_name")
+        widgets = {
+            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
+            "first_name": forms.TextInput(attrs={"autocomplete": "given-name"}),
+            "last_name": forms.TextInput(attrs={"autocomplete": "family-name"}),
+        }
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        qs = User.objects.exclude(pk=self.instance.pk)
+        if qs.filter(email__iexact=email).exists() or qs.filter(username__iexact=email).exists():
+            raise forms.ValidationError("An account with this email already exists.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data["email"].strip().lower()
+        user.username = user.email
+        if commit:
+            user.save()
         return user
 
 
@@ -244,3 +349,62 @@ class ProducerContentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if producer is not None:
             self.fields["product"].queryset = Product.objects.filter(producer=producer).order_by("name")
+
+
+class ReviewForm(forms.ModelForm):
+    """
+    TC-024 review submission form.
+
+    Verified-purchase enforcement happens in the view (which selects the
+    eligible OrderItem before constructing the form), but we belt-and-
+    brace it here as well by validating that the customer's order
+    actually contains the item being reviewed.
+    """
+
+    class Meta:
+        model = Review
+        fields = ("rating", "comment")
+        widgets = {
+            "rating": forms.RadioSelect(choices=Review.RATING_CHOICES),
+            "comment": forms.Textarea(attrs={"rows": 4, "maxlength": 2000}),
+        }
+        labels = {
+            "rating": "Your rating",
+            "comment": "Your review (optional)",
+        }
+        help_texts = {
+            "comment": "Share what worked well or anything other customers should know.",
+        }
+
+    def __init__(self, *args, customer=None, order_item=None, product=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._customer = customer
+        self._order_item = order_item
+        self._product = product
+
+    def clean(self):
+        cleaned = super().clean()
+        if self._customer is None or self._order_item is None or self._product is None:
+            raise forms.ValidationError(
+                "Reviews can only be submitted via the order detail page."
+            )
+        if self._order_item.order.customer_id != self._customer.id:
+            raise forms.ValidationError(
+                "You can only review items from your own orders."
+            )
+        if self._order_item.product_id != self._product.id:
+            raise forms.ValidationError("Order item does not match product.")
+        if not self._order_item.order.paid:
+            raise forms.ValidationError(
+                "You can only review a product after the order is paid."
+            )
+        return cleaned
+
+    def save(self, commit=True):
+        review = super().save(commit=False)
+        review.customer = self._customer
+        review.order_item = self._order_item
+        review.product = self._product
+        if commit:
+            review.save()
+        return review

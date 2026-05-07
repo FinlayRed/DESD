@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Producer(models.Model):
@@ -87,10 +88,16 @@ class Product(models.Model):
             return self.farm_origin
         return self.producer.business_name if self.producer else "Unknown origin"
 
+    @property
+    def is_available(self):
+        return self.is_active and self.stock_quantity > 0
+
 
 class Order(models.Model):
     STATUS_PENDING = "pending"
     STATUS_CONFIRMED = "confirmed"
+    STATUS_PROCESSING = "processing"
+    STATUS_READY = "ready"
     STATUS_DELIVERED = "delivered"
     STATUS_CANCELLED = "cancelled"
 
@@ -100,6 +107,8 @@ class Order(models.Model):
     STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_CONFIRMED, "Confirmed"),
+        (STATUS_PROCESSING, "Processing"),
+        (STATUS_READY, "Ready for Collection"),
         (STATUS_DELIVERED, "Delivered"),
         (STATUS_CANCELLED, "Cancelled"),
     ]
@@ -120,9 +129,12 @@ class Order(models.Model):
     customer_name = models.CharField(max_length=120, blank=True)
     customer_email = models.EmailField(blank=True)
     delivery_postcode = models.CharField(max_length=10, blank=True)
+    delivery_address = models.TextField(blank=True)
+    collection_date = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    confirmed_at = models.DateTimeField(blank=True, null=True)
     paid = models.BooleanField(default=False)
 
     class Meta:
@@ -137,6 +149,72 @@ class Order(models.Model):
             return self.customer_name
         full_name = self.customer.get_full_name().strip()
         return full_name or self.customer.get_username()
+
+    @property
+    def total_amount(self):
+        return sum(item.line_total for item in self.items.all())
+
+    @property
+    def is_multi_vendor(self):
+        return self.items.values("product__producer_id").distinct().count() > 1
+
+    @property
+    def minimum_collection_date(self):
+        return (timezone.now() + timezone.timedelta(hours=48)).date()
+
+    def _rollup_item_status_for_customer(self):
+        """
+        Derive a single status from line items: use the least-advanced active item
+        so the customer sees e.g. Preparing when any item is still being prepared.
+        """
+        items = list(self.items.all())
+        if not items:
+            return None
+        active = [i for i in items if i.status != OrderItem.STATUS_CANCELLED]
+        if not active:
+            return OrderItem.STATUS_CANCELLED
+        rank = {
+            OrderItem.STATUS_PENDING: 0,
+            OrderItem.STATUS_ACCEPTED: 1,
+            OrderItem.STATUS_PREPARING: 2,
+            OrderItem.STATUS_READY: 3,
+            OrderItem.STATUS_FULFILLED: 4,
+        }
+        ranks = [rank[i.status] for i in active]
+        if all(i.status == OrderItem.STATUS_FULFILLED for i in active):
+            return OrderItem.STATUS_FULFILLED
+        worst_rank = min(ranks)
+        for st, r in rank.items():
+            if r == worst_rank:
+                return st
+        return OrderItem.STATUS_PENDING
+
+    def get_customer_progress_display(self):
+        """Label from producer line-item workflow (replaces static Order.status for shoppers)."""
+        code = self._rollup_item_status_for_customer()
+        if code is None:
+            return self.get_status_display()
+        return dict(OrderItem.STATUS_CHOICES)[code]
+
+    @property
+    def customer_progress_badge_key(self):
+        """
+        Map rolled-up item status to Order.status-style slug for existing badge CSS.
+        """
+        code = self._rollup_item_status_for_customer()
+        if code is None:
+            return self.status
+        if code == OrderItem.STATUS_CANCELLED:
+            return self.STATUS_CANCELLED
+        if code == OrderItem.STATUS_FULFILLED:
+            return self.STATUS_DELIVERED
+        if code == OrderItem.STATUS_READY:
+            return self.STATUS_READY
+        if code in (OrderItem.STATUS_ACCEPTED, OrderItem.STATUS_PREPARING):
+            return self.STATUS_PROCESSING
+        if code == OrderItem.STATUS_PENDING:
+            return self.STATUS_PENDING
+        return self.STATUS_CONFIRMED
 
     def save(self, *args, **kwargs):
         creating = self._state.adding
@@ -232,6 +310,10 @@ class OrderItem(models.Model):
     def total_price(self):
         return self.price * self.quantity
 
+    @property
+    def line_total(self):
+        return self.total_price
+
 
 class SettlementEntry(models.Model):
     settlement = models.ForeignKey(ProducerSettlement, on_delete=models.CASCADE, related_name="entries")
@@ -249,11 +331,27 @@ class SettlementEntry(models.Model):
 
 
 class Payment(models.Model):
-    order = models.OneToOneField(Order, on_delete=models.CASCADE)
+    STATUS_PENDING = "pending"
+    STATUS_COMPLETED = "completed"
+    STATUS_FAILED = "failed"
+    STATUS_REFUNDED = "refunded"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_FAILED, "Failed"),
+        (STATUS_REFUNDED, "Refunded"),
+    ]
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     network_commission = models.DecimalField(max_digits=10, decimal_places=2)
     producer_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True)
+    stripe_charge_id = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ("-created_at",)
@@ -384,3 +482,66 @@ class TraceabilityRecord(models.Model):
             f"{self.producer_name_snapshot} → "
             f"{self.order_reference}"
         )
+
+
+# =============================================================================
+# TC-024: Customer ratings & reviews.
+# =============================================================================
+
+
+class Review(models.Model):
+    """
+    A customer's rating + comment on a product they bought.
+
+    Verified-purchase model: the OneToOne link to OrderItem means a
+    review can only exist when there's a purchase to back it. The form
+    layer additionally checks that the order is paid before allowing
+    submission.
+    """
+
+    RATING_CHOICES = [(i, f"{i} star{'s' if i != 1 else ''}") for i in range(1, 6)]
+
+    order_item = models.OneToOneField(
+        "OrderItem",
+        on_delete=models.CASCADE,
+        related_name="review",
+    )
+    product = models.ForeignKey(
+        "Product",
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    comment = models.TextField(blank=True, max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.customer} on {self.product} ({self.rating}/5)"
+
+    def clean(self):
+        errors = {}
+        if (
+            self.order_item_id
+            and self.product_id
+            and self.order_item.product_id != self.product_id
+        ):
+            errors["product"] = "Review product must match the purchased order item."
+        if (
+            self.order_item_id
+            and self.customer_id
+            and self.order_item.order.customer_id != self.customer_id
+        ):
+            errors["customer"] = "Review customer must match the order's customer."
+        if errors:
+            raise ValidationError(errors)

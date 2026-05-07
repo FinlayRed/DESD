@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Customer login{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/producer-form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer access</div>
+        <h1>Sign in to shop local produce</h1>
+        <p>Browse seasonal produce, track your basket, and follow your order history. Producer accounts should use <a href="{% url 'core:producer-login' %}">producer login</a>.</p>
+    </div>
+</div>
+
+<div class="minimal-form-wrap">
+    <div class="minimal-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="form-field{% if form.email.errors %} has-error{% endif %}">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+
+            <div class="form-field{% if form.password.errors %} has-error{% endif %}">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Sign in</button>
+                <a class="btn-secondary" href="{% url 'core:customer-register' %}">Create account</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

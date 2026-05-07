@@ -1,0 +1,82 @@
+{% extends "core/base.html" %}
+
+{% block title %}Cart Test - DEV{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="margin-top: 0;">Cart Test Page</h1>
+    <p class="lead">Development tool for testing cart functionality.</p>
+</div>
+
+<div class="card" style="margin-top: 1rem; background: #fffbeb; border-color: #fde68a;">
+    <p style="margin: 0; color: #92400e;">
+        <strong>⚠️ DEV ONLY:</strong> This page is for development testing.
+        Remove or restrict access before production deployment.
+    </p>
+</div>
+
+{% if products %}
+    <div class="card" style="margin-top: 1rem;">
+        <h2 style="margin-top: 0;">Available Products</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Producer</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th class="table-actions">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>
+                            <strong>{{ product.name }}</strong>
+                            {% if product.organic %}
+                                <span class="badge badge-organic">Organic</span>
+                            {% endif %}
+                            {% if product.allergen_info %}
+                                <br><small class="lead">Allergens: {{ product.allergen_info }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ product.producer.business_name }}</td>
+                        <td>£{{ product.price }}</td>
+                        <td>
+                            {% if product.stock_quantity > 0 %}
+                                <span class="badge badge-ready">{{ product.stock_quantity }} in stock</span>
+                            {% else %}
+                                <span class="badge badge-cancelled">Out of stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.stock_quantity > 0 %}
+                                <form action="{% url 'core:cart-add' product.id %}" method="post" class="actions">
+                                    {% csrf_token %}
+                                    <input type="number" name="quantity" value="1" min="1"
+                                           max="{{ product.stock_quantity }}" class="quantity-input">
+                                    <button type="submit" class="btn primary small">Add</button>
+                                </form>
+                            {% else %}
+                                <span class="lead">Unavailable</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="card" style="margin-top: 1rem;">
+        <p class="lead">No active products with stock available.</p>
+        <p>Create products in the <a href="/admin/core/product/">Django Admin</a> with stock_quantity > 0.</p>
+    </div>
+{% endif %}
+
+<div class="card actions" style="margin-top: 1rem;">
+    <a href="{% url 'core:cart' %}" class="btn primary">View Cart</a>
+    <a href="{% url 'core:customer-product-list' %}" class="btn">Browse Products</a>
+    <a href="/admin/core/product/" class="btn">Django Admin</a>
+</div>
+{% endblock %}
