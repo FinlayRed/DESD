@@ -503,6 +503,44 @@ class CustomerProductSearchTests(ProducerFeatureBase):
         self.assertNotContains(response, "<strong>Carrots</strong>")
 
 
+class CustomerContentBrowseTests(ProducerFeatureBase):
+    def test_customer_can_view_published_producer_content(self):
+        ProducerContent.objects.create(
+            producer=self.producer,
+            product=self.product,
+            content_type=ProducerContent.TYPE_RECIPE,
+            title="Spring carrot slaw",
+            season="Spring",
+            summary="A quick seasonal side.",
+            body="Shred carrots, add herbs, then chill before serving.",
+            is_published=True,
+        )
+
+        response = self.client.get(reverse("core:customer-content-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Spring carrot slaw")
+        self.assertContains(response, "Producer One")
+        self.assertContains(response, "Carrots")
+        self.assertContains(response, "Seasonal recipe")
+
+    def test_customer_content_page_hides_unpublished_content(self):
+        ProducerContent.objects.create(
+            producer=self.producer,
+            product=self.product,
+            content_type=ProducerContent.TYPE_STORY,
+            title="Draft harvest notes",
+            body="Internal draft only.",
+            is_published=False,
+        )
+
+        response = self.client.get(reverse("core:customer-content-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Draft harvest notes")
+        self.assertContains(response, "No stories or guides yet")
+
+
 class CustomerProductFilterDisplayTests(ProducerFeatureBase):
     def test_tc014_organic_filter(self):
         url = reverse("core:customer-product-list")

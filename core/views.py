@@ -671,6 +671,19 @@ class CustomerProductBrowseView(ListView):
         return context
 
 
+class CustomerContentListView(ListView):
+    model = ProducerContent
+    template_name = "core/customer_content_list.html"
+    context_object_name = "content_items"
+
+    def get_queryset(self):
+        return (
+            ProducerContent.objects.filter(is_published=True)
+            .select_related("producer", "product")
+            .order_by("-updated_at", "title")
+        )
+
+
 class CustomerCheckoutView(TemplateView):
     template_name = "core/customer_checkout.html"
 

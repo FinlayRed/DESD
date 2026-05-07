@@ -1,0 +1,45 @@
+{% extends "core/base.html" %}
+
+{% block title %}Stories & Guides{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <div>
+        <div class="eyebrow">Customer stories</div>
+        <h1>Stories & Guides</h1>
+        <p>Read seasonal recipes, storage advice, and farm stories from local producers.</p>
+    </div>
+    <div class="chip-row">
+        <a class="btn secondary" href="{% url 'core:customer-product-list' %}">Browse produce</a>
+    </div>
+</div>
+
+{% if content_items %}
+    <section class="grid two">
+        {% for item in content_items %}
+            <article class="card stack">
+                <div>
+                    <div class="chip-row" style="margin-bottom: 0.75rem;">
+                        <span class="badge">{{ item.get_content_type_display }}</span>
+                        {% if item.season %}<span class="badge">{{ item.season }}</span>{% endif %}
+                    </div>
+                    <h2 style="margin: 0;">{{ item.title }}</h2>
+                    <p class="meta" style="margin: 0.35rem 0 0;">
+                        {{ item.producer.business_name }}{% if item.product %} · {{ item.product.name }}{% endif %}
+                    </p>
+                </div>
+
+                {% if item.summary %}
+                    <p><strong>{{ item.summary }}</strong></p>
+                {% endif %}
+                <div>{{ item.body|linebreaks }}</div>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <article class="card stack" role="status">
+        <h2 style="margin-top: 0;">No stories or guides yet</h2>
+        <p class="meta">Published producer stories, recipes, and storage advice will appear here.</p>
+    </article>
+{% endif %}
+{% endblock %}

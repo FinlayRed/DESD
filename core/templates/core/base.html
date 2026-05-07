@@ -648,6 +648,7 @@
                     {% endif %}
                 {% endif %}
                 <a href="{% url 'core:customer-product-list' %}">Browse produce</a>
+                <a href="{% url 'core:customer-content-list' %}">Stories & Guides</a>
                 <a href="{% url 'core:cart' %}">Basket</a>
                 {% if user.is_authenticated %}
                     {% if user.is_staff %}

@@ -3,6 +3,7 @@ from django.urls import path
 
 from .views import (
     CustomerLoginView,
+    CustomerContentListView,
     CustomerPasswordChangeView,
     CustomerProductBrowseView,
     CustomerProfileUpdateView,
@@ -51,6 +52,7 @@ app_name = "core"
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("customer/products/", CustomerProductBrowseView.as_view(), name="customer-product-list"),
+    path("customer/stories/", CustomerContentListView.as_view(), name="customer-content-list"),
     path("customer/checkout/", CheckoutView.as_view(), name="customer-checkout"),
     path("customer/login/", CustomerLoginView.as_view(), name="customer-login"),
     path("customer/register/", CustomerRegisterView.as_view(), name="customer-register"),
