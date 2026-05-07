@@ -593,6 +593,18 @@ class CustomerProductFilterDisplayTests(ProducerFeatureBase):
         self.assertContains(response, "Surplus deal -25%")
         self.assertContains(response, "£1.49")
 
+    def test_browse_shows_product_food_miles_when_postcode_supplied(self):
+        response = self.client.get(reverse("core:customer-product-list"), {"postcode": "BS32 4AQ"})
+
+        self.assertContains(response, "Food Miles")
+        self.assertContains(response, "6.3 miles")
+
+    def test_browse_hides_product_food_miles_before_postcode_search(self):
+        response = self.client.get(reverse("core:customer-product-list"))
+
+        self.assertNotContains(response, "Food Miles")
+        self.assertNotContains(response, "6.3 miles")
+
     def test_browse_empty_state_when_search_matches_nothing(self):
         url = reverse("core:customer-product-list")
         response = self.client.get(url, {"q": "nonexistentproductxyz123"})

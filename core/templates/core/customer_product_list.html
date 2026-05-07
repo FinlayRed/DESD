@@ -32,6 +32,13 @@
                     </option>
                 {% endfor %}
             </select>
+            <input
+                type="text"
+                name="postcode"
+                placeholder="Delivery postcode for food miles"
+                value="{{ postcode }}"
+                autocomplete="postal-code"
+            >
         </div>
         <div class="checkbox-row">
             <label>
@@ -78,6 +85,7 @@
                                 <tr>
                                     <th>Product</th>
                                     <th>Farm Origin</th>
+                                    {% if postcode %}<th>Food Miles</th>{% endif %}
                                     <th>Harvest / Availability</th>
                                     <th>Season Status</th>
                                     <th>Allergens</th>
@@ -103,6 +111,7 @@
                                             {{ product.producer.business_name }}
                                             <p class="meta" style="margin: 0.3rem 0 0;">{{ product.producer.postcode }}</p>
                                         </td>
+                                        {% if postcode %}<td>{% if product.food_miles != None %}{{ product.food_miles }} miles{% else %}-{% endif %}</td>{% endif %}
                                         <td>
                                             {% if product.available_from %}{{ product.available_from }}{% else %}N/A{% endif %}
                                             to

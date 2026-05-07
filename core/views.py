@@ -25,7 +25,7 @@ from .forms import (
     SurplusListingForm,
 )
 from .models import Category, Order, OrderItem, Producer, ProducerContent, ProducerSettlement, Product, SurplusListing
-from .services import item_food_miles, order_item_requires_attention, sync_producer_settlements
+from .services import calculate_food_miles, item_food_miles, order_item_requires_attention, sync_producer_settlements
 
 # Customer browse: exclude products whose allergen_info matches any keyword in selected groups (keyword-based).
 ALLERGEN_EXCLUSION_GROUPS = {
@@ -628,9 +628,11 @@ class CustomerProductBrowseView(ListView):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
         products = list(context["products"])
+        delivery_postcode = self.request.GET.get("postcode", "").strip()
         grouped = {}
 
         for product in products:
+            product.food_miles = calculate_food_miles(product.producer.postcode, delivery_postcode)
             label = product.category.name if product.category else self.UNCATEGORISED_LABEL
             if product.available_from and product.available_to:
                 if product.available_from <= today <= product.available_to:
@@ -657,6 +659,7 @@ class CustomerProductBrowseView(ListView):
         else:
             context["customer_browse_catalog_empty"] = not Product.objects.filter(is_active=True).exists()
         context["query"] = self.request.GET.get("q", "").strip()
+        context["postcode"] = delivery_postcode
         context["active_category"] = self.request.GET.get("category", "").strip().lower()
         context["organic_only"] = self.request.GET.get("organic") == "1"
         context["allergen_exclusion_choices"] = ALLERGEN_EXCLUSION_CHOICES
